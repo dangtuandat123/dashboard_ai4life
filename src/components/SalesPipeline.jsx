@@ -82,7 +82,7 @@ const SalesPipeline = () => {
                 </div>
             </div>
 
-            <div className="relative flex-1 min-h-[300px] w-full">
+            <div className="relative flex-1 min-h-[240px] w-full">
                 <div
                     className="absolute inset-0 pointer-events-none opacity-20"
                     style={{

@@ -1,0 +1,30 @@
+Dự án đề xuất xây dựng một hệ thống **AI AGENT + CHATBOT** nhằm tự động hóa việc báo cáo hoạt động hàng ngày của các đội nhóm (sales, marketing, vận hành chiến dịch, v.v.) và hỗ trợ phân tích dữ liệu theo thời gian thực.
+
+Nhân viên sẽ báo cáo công việc **bằng ngôn ngữ tự nhiên qua ứng dụng chat nội bộ**, sau đó tác tử AI sẽ trích xuất thông tin chính (như doanh số, chi phí, nhiệm vụ hoàn thành...) và ghi vào cơ sở dữ liệu được liên kết với ngân sách (budget) của dự án hoặc phòng ban.
+
+Qua đó, quản lý có thể **theo dõi hiệu suất công việc và hiệu suất nhân viên theo thời gian thực.** Khi nhân viên đạt kết quả tốt, hệ thống cung cấp cơ sở để thưởng “nóng” ngay lập tức, giúp tăng động lực làm việc – bởi lẽ sự ghi nhận tức thời sẽ thúc đẩy động lực và năng suất của nhân viên
+
+Ngược lại, nếu phát hiện dấu hiệu hiệu suất thấp, quản lý có thể nhanh chóng có cơ sở can thiệp, điều chỉnh kịp thời
+
+Ngoài ra, dữ liệu hoạt động được ghi nhận tự động và có cấu trúc sẽ giúp giảm tải cho bộ phận phân tích dữ liệu – họ chỉ cần trao đổi với chatbot để nhận báo cáo, truy vấn nhanh các chỉ số, thay vì tốn công tổng hợp thủ công.
+
+# **Lợi ích chính:**
+
+- **Báo cáo nhanh, giảm tải cho nhân viên:** Tự động hóa giúp nhân viên bận rộn không phải nhập liệu thủ công, chỉ cần nhắn tin ngắn gọn.
+- **Giám sát hiệu suất thời gian thực:** Quản lý có thể xem hiệu suất hoạt động của từng nhân viên và dự án tức thì, nhờ dữ liệu cập nhật liên tục.
+- **Phản hồi kịp thời:** Nếu một nhân viên đạt thành tích tốt, hệ thống cung cấp cơ sở dữ liệu để **thưởng nóng** ngay, tạo động lực tức thì. Ngược lại, nếu hiệu suất kém, quản lý có số liệu thực để **nhắc nhở hoặc hỗ trợ** kịp thời.
+- **Hỗ trợ phân tích dữ liệu:**  Người phân tích dữ liệu có thể **chat với chatbot** để yêu cầu báo cáo, thống kê thay vì tốn thời gian tổng hợp dữ liệu thủ công. Chatbot sẽ nhanh chóng cung cấp insight ban đầu, giúp **khoanh vùng vấn đề** và giảm công sức xử lý dữ liệu thô (loại bỏ dữ liệu nhiễu, tập trung vào điểm cần phân tích) – qua đó **tinh giản nhân sự phân tích dữ liệu** và **tiết kiệm chi phí** cho doanh nghiệp.
+
+# **Mục tiêu và yêu cầu hệ thống**
+
+Hệ thống gồm **hai tác tử AI chính (AI agents)** với các yêu cầu như sau:
+
+- **Agent 1 – Tác tử tự động báo cáo hoạt động:** Nhận đầu vào là tin nhắn ngôn ngữ tự nhiên từ nhân viên (qua app chat nội bộ), sau đó:
+    - **Trích xuất thông tin structured**: hiểu và trích ra các trường thông tin quan trọng **(ví dụ: nhân viên nào, ngày giờ, hoạt động gì, kết quả đạt được, chi phí bao nhiêu, liên quan dự án nào...).**
+    - **Đối chiếu với ngân sách:** kết nối với dữ liệu ngân sách hiện có (theo dự án hoặc phòng ban) để kiểm tra xem chi phí hoặc kết quả báo cáo có hợp lý, nằm trong hạn mức hay không.
+    - **Ghi dữ liệu vào database**: nếu hợp lệ, tự động thêm bản ghi hoạt động vào cơ sở dữ liệu (CSDL) PostgreSQL (Supabase). Nếu phát hiện bất thường (vượt ngân sách, thông tin thiếu), có thể phản hồi lại để người dùng điều chỉnh và gửi để quản lý xem xét.
+    - **Phản hồi cho người dùng:** gửi lại tin nhắn xác nhận đã ghi nhận (hoặc cảnh báo nếu có vấn đề, ví dụ “Đã ghi nhận, **nhưng chi phí vượt 20% ngân sách!**”,…..).
+- **Agent 2 – Tác tử Chatbot phân tích dữ liệu:** Cho phép quản lý hoặc Data Analyst **hỏi đáp bằng ngôn ngữ tự nhiên** trên dữ liệu đã thu thập:
+    - **Truy vấn hiệu suất theo thời gian thực:** trả lời các câu hỏi như *“Doanh số tháng này của team A là bao nhiêu?”*, *“Ai là nhân viên xuất sắc nhất quý?”*, *“Chiến dịch marketing X tiêu tốn bao nhiêu và hiệu quả ra sao?”*...
+    - **Phân tích và giải thích dữ liệu:** có thể cung cấp insight như xu hướng, so sánh với mục tiêu ngân sách, cảnh báo độ lệch, **v.v. Ví dụ: *“Team bán hàng đạt 110% KPI tháng này, vượt ngân sách 5%, nguyên nhân do chiến dịch X mang lại +20% khách hàng mới.”***
+    - **Gợi ý quyết định:** hỗ trợ quản lý đưa ra quyết định nhanh (thưởng/phạt, điều chỉnh chiến lược) dựa trên dữ liệu phân tích tức thì.

@@ -1,0 +1,299 @@
+
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.Claim (Bồi thường) (
+  Claim_id integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  Coverage_id integer NOT NULL,
+  Event_Date timestamp without time zone,
+  Request_Date timestamp without time zone NOT NULL,
+  Claim_Status character varying NOT NULL,
+  Requested_Amount numeric,
+  Approved_Amount numeric,
+  Description character varying,
+  Payment_Date timestamp without time zone,
+  CONSTRAINT Claim (Bồi thường)_pkey PRIMARY KEY (Claim_id),
+  CONSTRAINT fk_claim_coverage FOREIGN KEY (Coverage_id) REFERENCES public.Coverage (Quyền lợi/Sản phẩm)(Coverage_ID)
+);
+CREATE TABLE public.Coverage (Quyền lợi/Sản phẩm) (
+  Coverage_ID integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  Policy_ID integer NOT NULL,
+  Party_ID integer NOT NULL,
+  Product_id integer NOT NULL,
+  Sum_Asured numeric NOT NULL,
+  Phí_bảo_hiểm(Premium) numeric,
+  CONSTRAINT Coverage (Quyền lợi/Sản phẩm)_pkey PRIMARY KEY (Coverage_ID),
+  CONSTRAINT fk_coverage_policy FOREIGN KEY (Policy_ID) REFERENCES public.Policy (Hợp đồng)(Policy_ID),
+  CONSTRAINT fk_coverage_party FOREIGN KEY (Party_ID) REFERENCES public.Party (Đối tượng)(Party_ID),
+  CONSTRAINT fk_coverage_product FOREIGN KEY (Product_id) REFERENCES public.Product(Product_id)
+);
+CREATE TABLE public.Party (Đối tượng) (
+  Party_ID integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  Name character varying NOT NULL,
+  Date_of_birth timestamp without time zone NOT NULL,
+  Gender USER-DEFINED NOT NULL,
+  CCCD smallint,
+  Location character varying NOT NULL,
+  Phone_num smallint,
+  Email character varying,
+  Role character varying,
+  CONSTRAINT Party (Đối tượng)_pkey PRIMARY KEY (Party_ID)
+);
+CREATE TABLE public.Policy (Hợp đồng) (
+  Policy_ID integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  Policy_Number smallint NOT NULL,
+  Party_ID integer NOT NULL,
+  Ngày_hiệu_lực timestamp without time zone NOT NULL,
+  Ngày_đáo_hạn timestamp without time zone,
+  Status character varying NOT NULL,
+  Kỳ_đóng_phí timestamp without time zone,
+  Campaign_Code character varying NOT NULL,
+  CONSTRAINT Policy (Hợp đồng)_pkey PRIMARY KEY (Policy_ID),
+  CONSTRAINT fk_policy_party FOREIGN KEY (Party_ID) REFERENCES public.Party (Đối tượng)(Party_ID)
+);
+CREATE TABLE public.Product (
+  Product_id integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  Product_Code character varying NOT NULL,
+  Product_Name character varying NOT NULL,
+  Product_Type character varying NOT NULL,
+  Status character varying NOT NULL,
+  Issure_Date date NOT NULL,
+  End_Date date,
+  CONSTRAINT Product_pkey PRIMARY KEY (Product_id)
+);
+CREATE TABLE public.Transaction (Giao dịch) (
+  Transaction_ID integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  Policy_ID integer NOT NULL,
+  Loại giao dịch character varying NOT NULL,
+  Số tiền numeric NOT NULL,
+  Ngày giao dịch timestamp without time zone NOT NULL,
+  CONSTRAINT Transaction (Giao dịch)_pkey PRIMARY KEY (Transaction_ID),
+  CONSTRAINT fk_transaction_policy FOREIGN KEY (Policy_ID) REFERENCES public.Policy (Hợp đồng)(Policy_ID)
+);
+
+
+
+Update mới 
+- Dùng một "Mã liên kết" (Linking Key), thường gọi là Mã Chiến dịch (Campaign Code).
+Quy trình nghiệp vụ:
+1. Tại Vùng 1 (Hệ thống Activity):
+  - Khi AI Agent + Sếp duyệt một Activity_Request (ví dụ: Request_ID = 101, "Hội thảo TPHCM"), hệ thống sẽ tự động tạo một Mã Chiến dịch ngắn gọn, ví dụ: HCM_1225.
+  - Mã này được gửi cho Sales Team.
+2. Tại Vùng 2 (Hệ thống PAS):
+  - Khi Sales Team chốt được khách hàng tại sự kiện, họ sẽ nhập hồ sơ khách hàng vào hệ thống PAS.
+  - Trong giao diện nhập liệu của PAS, sẽ có một trường bắt buộc gọi là "Nguồn" (Lead Source) hoặc "Mã Chiến dịch" (Campaign Code).
+  - Sales Team sẽ nhập HCM_1225 vào trường này cho mọi khách hàng họ chốt được từ sự kiện đó.
+3. Tại Vùng 3 (Hệ thống DWH):
+  - Hàng đêm (may be hằng Tuần (Theo Batch Time)), DWH sao chép dữ liệu. Giờ đây, nó có thể dễ dàng liên kết:
+    - Bảng Chi tiêu (từ Vùng 1) có Mã HCM_1225 = 50 triệu.
+    - Bảng Hợp đồng (từ Vùng 2) có 15 hợp đồng với Mã HCM_1225, tổng doanh thu 300 triệu.
+  - Kết quả: Có thể tạo báo cáo ROI chính xác: Chiến dịch HCM_1225 chi 50 triệu, thu 300 triệu.
+Bổ sung 2 bảng Product và Claim (Bồi thường)
+Bảng Product (Sản phẩm):
+- Giả sử ban đầu "hard-code" Product_Code (VARCHAR) trong bảng Coverage. Điều này sẽ gây ra lỗi nhập liệu (ví dụ: "SP01" và "sp01" là khác nhau) và không thể lưu tên đầy đủ của sản phẩm.
+- Solution: Tạo bảng Product
+Bảng Claim (Bồi thường):
+- Hệ thống của mình đang có "tiền vào" (Transaction đóng phí) nhưng không có nghiệp vụ "tiền ra" (Bồi thường). Bảng Transaction trước đó chỉ ghi nhận dòng tiền, nó không quản lý quy trình duyệt bồi thường.
+- Giải pháp: Thêm bảng Claim.  Khi một Claim được duyệt "Approved", lúc đó mình mới tạo một dòng Transaction (Loại = "Chi trả bồi thường").
+
+Describe chi tiết về 2 bảng Product và Claim
+Bảng Product (Sản phẩm)
+1.1 Tại sao cần bảng này?
+Ban đầuProduct_Code (một đoạn text) vào bảng Coverage. Điều này gây ra 3 vấn đề lớn:
+1. Không nhất quán: Người nhập có thể gõ "SP01", "sp01", "SP-01". Máy tính sẽ hiểu đây là 3 sản phẩm khác nhau, gây ra "rác" dữ liệu.
+2. Không có thông tin: Mình chỉ có "mã", vậy "tên đầy đủ" của sản phẩm (ví dụ: "Sản phẩm Bảo hiểm Liên kết chung Đồng hành Vững bước") lưu ở đâu?
+3. Khó bảo trì: Nếu công ty đổi tên một sản phẩm, mình sẽ phải cập nhật hàng triệu dòng trong bảng Coverage (một bảng khổng lồ).
+Giải pháp: Tạo một bảng "sổ cái" (master data) tên là Product để lưu thông tin sản phẩm một lần duy nhất. Bảng Coverage sẽ chỉ tham chiếu đến Product_ID của nó.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Description
+Product_ID
+INTEGER
+PK (Khóa chính)
+Mã định danh duy nhất của sản phẩm trong hệ thống.
+Product_Code
+VARCHAR(50)
+UNIQUE
+Mã nghiệp vụ (ví dụ: "UL01", "CI03"). Đây là mã mà nhân viên hay dùng.
+Product_Name
+VARCHAR(255)
+
+Tên đầy đủ, chính thức của sản phẩm
+Product_Type
+VARCHAR(50)
+
+Cực kỳ quan trọng! Dùng để phân loại: "Main" (Sản phẩm chính) hay "Rider" (Sản phẩm bổ trợ).
+Status
+VARCHAR(50)
+
+Trạng thái sản phẩm: "Active" (Đang bán), "Discontinued" (Ngừng bán)...
+Issue_Date
+DATE
+
+Ngày sản phẩm này bắt đầu được bán.
+End_Date
+DATE
+
+Ngày sản phẩm này ngừng bán (có thể NULL)
+Bảng Claim (Yêu cầu Bồi thường)
+Tại sao cần bảng này?
+Trước đó, bảng Transaction của mình chỉ ghi nhận dòng tiền (ví dụ: đóng phí).
+Nhưng "Bồi thường" (Claim) không phải là một giao dịch đơn lẻ, nó là một quy trình (workflow) có nhiều trạng thái:
+- Khách hàng nộp hồ sơ -> Trạng thái: "Mới nhận" (Submitted)
+- Công ty xem xét, thẩm định -> Trạng thái: "Đang xử lý" (In Review)
+- Công ty thấy thiếu giấy tờ -> Trạng thái: "Chờ bổ sung" (Pending Info)
+- Công ty duyệt -> Trạng thái: "Đã duyệt" (Approved)
+- Công ty từ chối -> Trạng thái: "Đã từ chối" (Rejected)
+Bảng Transaction không thể lưu được quy trình này. Do đó cần một bảng Claim để quản lý "hồ sơ" (case file) của từng sự vụ bồi thường.
+Tên cột
+Kiểu dữ liệu
+Khóa
+Description
+Claim_ID
+INTEGER
+PK (Khóa chính)
+Mã định danh duy nhất cho hồ sơ bồi thường này.
+Coverage_ID
+INTEGER
+FK
+Cực kỳ quan trọng! Khách hàng đang đòi quyền lợi từ sản phẩm/quyền lợi nào? (Trỏ đến Coverage.Coverage_ID).
+Event_Date
+DATETIME
+
+Ngày xảy ra sự kiện bảo hiểm (ngày tai nạn, ngày nhập viện).
+Request_Date
+DATETIME
+
+Ngày khách hàng chính thức nộp hồ sơ yêu cầu.
+Claim_Status
+VARCHAR(50)
+
+Trạng thái của quy trình (Submitted, Approved, Rejected...).
+Requested_Amount
+DECIMAL
+
+Số tiền khách hàng yêu cầu bồi thường (có thể NULL).
+Approved_Amount
+DECIMAL
+
+Số tiền công ty thực sự duyệt chi.
+Description
+TEXT
+
+Ghi chú của khách hàng hoặc của nhân viên thẩm định (có thể NULL).
+Payment_Date
+DATETIME
+
+Ngày công ty thanh toán tiền (sau khi duyệt). (có thể NULL).
+Tại sao lại không gộp 2 db lại với nhau?
+1. Lý do tại sao:
+- Sai Mục đích Sử dụng:
+  - Hệ thống Activity : Là một CSDL nội bộ (Back-office), ưu tiên tốc độ ghi/sửa (ví dụ: tạo request, thêm comment, đổi Status). Tần suất thấp (vài trăm/nghìn bản ghi mới mỗi ngày).
+  - Hệ thống PAS: Là CSDL lõi nghiệp vụ (Core Business), ưu tiên tốc độ đọc và tính toàn vẹn 24/7. Tần suất cực cao (hàng triệu khách hàng, hàng chục triệu giao dịch).
+- Ảnh hưởng nặng về Hiệu năng (Performance):
+  - Hệ thống PAS có các bảng khổng lồ (ví dụ: bảng Policy, Transaction có thể lên đến hàng chục triệu dòng).
+  - Khi gộp chung, mọi truy vấn đơn giản của AI Agent (ví dụ: SELECT * FROM Activity_Request) cũng phải chạy trên một CSDL khổng lồ, khiến nó chậm đi.
+  - Điều tệ nhất: Nếu một truy vấn báo cáo (reporting) (ví dụ: "lấy tổng chi tiêu của ATO so với tổng doanh thu của PAS") vô tình khóa bảng (lock table) Policy hoặc Transaction trong vài giây, toàn bộ nghiệp vụ lõi của công ty sẽ bị đứng hình. Khách hàng không thể đóng phí, nhân viên không thể xử lý bồi thường.
+- Rủi ro Bảo mật Khổng lồ:
+  - Hệ thống PAS chứa dữ liệu cực kỳ nhạy cảm của khách hàng (thông tin cá nhân, sức khỏe).
+  - Hệ thống Activity chỉ chứa dữ liệu chi tiêu nội bộ.
+  - AI Agent (vốn chỉ cần duyệt chi tiêu) tự nhiên lại có quyền (hoặc ít nhất là có khả năng) đọc được dữ liệu sức khỏe của khách hàng. Đây là một cơn ác mộng về bảo mật.
+2. Truy xuất của AI Agent sẽ bị chậm?
+Nó sẽ phá vỡ hệ thống.
+Như đã giải thích ở trên, AI Agent của mình là một AI Giao dịch (Transactional AI). Nó cần phản hồi ngay lập tức (real-time) để:
+- Báo lỗi cho Sales Team ("Nhập quá 300k").
+- Gửi tóm tắt cho sếp.
+Nếu CSDL của nó bị gộp chung với CSDL PAS (hàng triệu dòng), tốc độ của nó sẽ chậm đi từ mili-giây thành vài giây (hoặc vài phút) cho mỗi thao tác. Quy trình của bạn sẽ "chết".
+Mô tả chi tiết về PAS system này
+1. Giải thích về các cột NULL và NOT NULL
+Các cột BẮT BUỘC (Phải xóa dấu ?)
+- Bảng Policy (Hợp đồng):
+  - Policy_Number: Phải có. Số hợp đồng là định danh nghiệp vụ.
+  - Party_ID: Phải có. Hợp đồng phải có chủ sở hữu.
+  - Ngày_hiệu_lực: Phải có. Phải biết hợp đồng bắt đầu khi nào.
+  - Status: Phải có. Phải biết trạng thái (đang chờ, hiệu lực, hủy...).
+- Bảng Party (Đối tượng):
+  - Name: Phải có. Phải biết tên khách hàng.
+- Bảng Product (Sản phẩm):
+  - Product_Code, Product_Name, Product_Type: Phải có. Đây là thông tin định danh cơ bản của sản phẩm.
+- Bảng Coverage (Quyền lợi):
+  - Policy_ID, Party_ID, Product_ID: Phải có. Quyền lợi phải thuộc 1 hợp đồng, bảo vệ 1 người, và là 1 sản phẩm cụ thể.
+  - Sum_Assured: Phải có. Phải biết số tiền bảo hiểm là bao nhiêu.
+- Bảng Transaction (Giao dịch):
+  - Policy_ID, Loại_giao_dịch, Số_tiền, Ngày_giao_dịch: Phải có. Một giao dịch tài chính không thể thiếu 4 thông tin này.
+- Bảng Claim (Bồi thường):
+  - Coverage_ID: Phải có. Phải biết đang đòi bồi thường cho quyền lợi nào.
+  - Request_Date: Phải có. Phải biết ngày nộp hồ sơ.
+  - Claim_Status: Phải có. Phải biết trạng thái của hồ sơ.
+
+---
+Các cột TÙY CHỌN (Nên giữ dấu ?)
+Đây là các giải thích chi tiết cho từng dấu ? mà bạn nên giữ lại:
+- Policy.Ngày_đáo_hạn (?):
+  - Lý do: Cho phép NULL (trống).
+  - Ví dụ: Các sản phẩm "bảo hiểm trọn đời" (whole life) không có ngày đáo hạn cụ thể. Nó sẽ chỉ kết thúc khi người được bảo hiểm tử vong.
+- Policy.Kỳ_đóng_phí (?):
+  - Lý do: Cho phép NULL.
+  - Ví dụ: Các sản phẩm đóng phí một lần (single premium). Khách hàng đóng 1 cục tiền duy nhất lúc ban đầu nên không có "kỳ" (hàng năm/quý/tháng) để theo dõi nữa.
+- Policy.Campaign_Code (?):
+  - Lý do: Cho phép NULL.
+  - Ví dụ: Khách hàng tự tìm đến công ty (khách vãng lai) hoặc mua qua một kênh thông thường mà không đến từ một sự kiện/chiến dịch (Activity) cụ thể nào.
+- Party.CCCD / Party.Email / Party.Phone_num (?):
+  - Lý do: Cho phép NULL.
+  - Ví dụ 1 (CCCD): Khách hàng là trẻ em (ví dụ: người được bảo hiểm trong hợp đồng của bố mẹ) chưa có CCCD.
+  - Ví dụ 2 (Email/Phone): Khách hàng là người thụ hưởng (Beneficiary) mà người mua không có thông tin liên lạc chi tiết, hoặc khách hàng từ chối cung cấp email.
+- Party.Role (?):
+  - Lý do: Cho phép NULL.
+  - Ví dụ: Cột này có thể dùng để đánh dấu các vai trò "đặc biệt" như "Đại lý", "Bác sĩ". Nếu là khách hàng thông thường (Bên mua, Người được bảo hiểm), vai trò của họ đã được thể hiện qua các khóa ngoại, nên cột Role này có thể để trống.
+- Product.End_Date (?):
+  - Lý do: Cho phép NULL.
+  - Ví dụ: Sản phẩm vẫn đang được bán (Status = "Active") nên chưa có ngày kết thúc. Cột này chỉ được điền khi công ty quyết định "ngừng bán" (Discontinued) sản phẩm.
+- Claim.Event_Date (?):
+  - Lý do: Cho phép NULL.
+  - Ví dụ: Khách hàng nộp hồ sơ yêu cầu "Đáo hạn hợp đồng" hoặc "Rút giá trị tài khoản". Các nghiệp vụ này không có "sự kiện bảo hiểm" (như tai nạn/ốm đau) xảy ra vào một ngày cụ thể.
+- Claim.Requested_Amount (?):
+  - Lý do: Cho phép NULL.
+  - Ví dụ: Khách hàng nộp yêu cầu bồi thường thẻ sức khỏe (y tế). Họ chỉ nộp hóa đơn viện phí và không biết chính xác số tiền được duyệt là bao nhiêu. Họ để trống để công ty tự tính toán.
+- Claim.Approved_Amount / Claim.Payment_Date (?):
+  - Lý do: Cho phép NULL.
+  - Ví dụ: Khi hồ sơ mới được nộp (Claim_Status = "Đang chờ xử lý"), dĩ nhiên là chưa có số tiền được duyệt và chưa có ngày thanh toán. Các cột này bắt buộc phải NULL cho đến khi hồ sơ được duyệt.
+- Claim.Description (?):
+  - Lý do: Cho phép NULL. Cột ghi chú là tùy chọn, không bắt buộc.
+
+---
+2. Quy trình Vận hành của CSDL (How it works)
+CSDL này vận hành xoay quanh 2 quy trình nghiệp vụ chính: (A) Phát hành Hợp đồng và (B) Xử lý Bồi thường.
+A. Kịch bản Vận hành 1: Phát hành Hợp đồng mới
+1. Tạo Đối tượng (Party):
+  - Sales Team gặp khách hàng (Nguyễn Văn A). Hệ thống INSERT một dòng mới vào Party (Chủ sở hữu).
+  - Anh A mua cho con là bé B. Hệ thống INSERT một dòng Party thứ hai (Người được bảo hiểm).
+2. Tạo Hợp đồng (Policy):
+  - Hệ thống INSERT một dòng vào Policy.
+  - Policy.Party_ID sẽ trỏ đến Party_ID của anh A (chủ sở hữu).
+  - Nếu anh A mua từ một sự kiện -> Policy.Campaign_Code = 'HCM_1225'.
+3. Tạo Quyền lợi (Coverage):
+  - Anh A mua 1 sản phẩm chính (tra cứu từ Product) và 2 sản phẩm bổ trợ (cũng tra cứu từ Product).
+  - Hệ thống INSERT 3 dòng mới vào Coverage. Cả 3 dòng:
+    - Cùng Policy_ID (thuộc hợp đồng của anh A).
+    - Cùng Party_ID (trỏ đến Party_ID của bé B - người được bảo hiểm).
+    - Có 3 Product_ID khác nhau (tương ứng 3 sản phẩm đã mua).
+4. Ghi nhận Thanh toán (Transaction):
+  - Anh A đóng phí lần đầu.
+  - Hệ thống INSERT 1 dòng vào Transaction (Loại = "Đóng phí lần đầu").
+5. Kích hoạt: Hệ thống UPDATE Policy.Status = "Đang hiệu lực".
+B. Kịch bản Vận hành 2: Xử lý Bồi thường
+1. Yêu cầu Bồi thường (Claim):
+  - Một năm sau, bé B (người được bảo hiểm) không may phải nằm viện, sử dụng quyền lợi thẻ sức khỏe (ví dụ: Coverage_ID = 101).
+  - Anh A nộp hồ sơ (hóa đơn viện phí).
+  - Hệ thống INSERT 1 dòng vào Claim (gán Coverage_ID = 101, Claim_Status = "Đang chờ xử lý").
+2. Thẩm định & Phê duyệt:
+  - Nhân viên thẩm định (Claim Adjuster) xem xét hồ sơ.
+  - Họ quyết định duyệt chi trả 5 triệu.
+  - Hệ thống UPDATE dòng Claim đó:
+    - Claim_Status = "Đã duyệt"
+    - Approved_Amount = 5,000,000
+3. Kích hoạt Giao dịch (Transaction):
+  - Hệ thống (hoặc Kế toán) thực hiện chuyển tiền.
+  - Hệ thống UPDATE Claim.Payment_Date = (ngày hôm nay).
+  - Đồng thời, hệ thống tự động INSERT 1 dòng mới vào Transaction (Loại = "Chi trả bồi thường", Số_tiền = 5,000,000).

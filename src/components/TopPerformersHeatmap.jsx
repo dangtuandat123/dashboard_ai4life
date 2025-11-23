@@ -7,7 +7,7 @@ const TopPerformersHeatmap = () => {
         []
     );
 
-    const allValues = performers.flatMap((person) => [person.nhanVon, person.hoatDong, person.doanhThu]);
+    const allValues = performers.flatMap((person) => [person.hoatDong, person.doanhThu]);
     const minValue = Math.min(...allValues);
     const maxValue = Math.max(...allValues);
 
@@ -15,7 +15,6 @@ const TopPerformersHeatmap = () => {
         const normalized = (value - minValue) / (maxValue - minValue);
         const opacity = 0.2 + normalized * 0.8;
 
-        if (metric === 'nhanVon') return `rgba(34, 211, 238, ${opacity})`;
         if (metric === 'hoatDong') return `rgba(168, 85, 247, ${opacity})`;
         return `rgba(251, 191, 36, ${opacity})`;
     };
@@ -37,23 +36,16 @@ const TopPerformersHeatmap = () => {
             </div>
 
             <div className="flex-1 flex flex-col gap-1.5 overflow-hidden">
-                <div className="grid grid-cols-4 gap-1 mb-1">
+                <div className="grid grid-cols-3 gap-1 mb-1">
                     <div className="text-[9px] font-semibold text-slate-500"></div>
-                    <div className="text-[9px] font-semibold text-center text-cyan-300">NHẬN VỐN</div>
                     <div className="text-[9px] font-semibold text-center text-purple-300">HOẠT ĐỘNG</div>
                     <div className="text-[9px] font-semibold text-center text-amber-300">DOANH THU</div>
                 </div>
 
                 {performers.map((performer) => (
-                    <div key={performer.name} className="grid grid-cols-4 gap-1 flex-1">
+                    <div key={performer.name} className="grid grid-cols-3 gap-1 flex-1">
                         <div className="text-[10px] font-medium text-slate-200 flex items-center truncate">
                             {performer.name}
-                        </div>
-                        <div
-                            className="rounded flex items-center justify-center text-xs font-bold text-white transition-all hover:scale-105 cursor-pointer"
-                            style={{ backgroundColor: getColorIntensity(performer.nhanVon, 'nhanVon') }}
-                        >
-                            {formatValue(performer.nhanVon, 'nhanVon')}
                         </div>
                         <div
                             className="rounded flex items-center justify-center text-xs font-bold text-white transition-all hover:scale-105 cursor-pointer"

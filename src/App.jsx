@@ -171,7 +171,7 @@ function App() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-12 auto-rows-[minmax(240px,auto)] gap-3 flex-1">
+                        <div className="grid grid-cols-12 auto-rows-[minmax(220px,auto)] gap-3 flex-1">
                             <div className="col-span-12 lg:col-span-4 min-w-0">
                                 <PYPPerformance />
                             </div>
