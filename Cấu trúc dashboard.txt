@@ -1,0 +1,39 @@
+<div class="container">
+  <div class="PYP Performance"></div>
+  <div class="Sale pipeline"></div>
+  <div class="Top performent heatmap"></div>
+  <div class="Chiến Binh Sales"></div>
+  <div class="Hiệu suất Tài chính"></div>
+  <div class="Kênh bán hàng"></div>
+  <div class="Doanh thu sản phẩm"></div>
+  <div class="Số lượng bán"></div>
+</div>
+
+.container {  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
+  gap: 0px 0px;
+  grid-auto-flow: row;
+  grid-template-areas:
+    "PYP Performance Sale pipeline Sale pipeline Sale pipeline Top performent heatmap"
+    "Doanh thu sản phẩm Doanh thu sản phẩm Số lượng bán Số lượng bán Top performent heatmap"
+    "Doanh thu sản phẩm Doanh thu sản phẩm Số lượng bán Số lượng bán Top performent heatmap"
+    "Kênh bán hàng Kênh bán hàng Hiệu suất Tài chính Hiệu suất Tài chính Chiến Binh Sales"
+    "Kênh bán hàng Kênh bán hàng Hiệu suất Tài chính Hiệu suất Tài chính Chiến Binh Sales";
+}
+
+.PYP Performance { grid-area: PYP Performance; }
+
+.Sale pipeline { grid-area: Sale pipeline; }
+
+.Top performent heatmap { grid-area: Top performent heatmap; }
+
+.Chiến Binh Sales { grid-area: Chiến Binh Sales; }
+
+.Hiệu suất Tài chính { grid-area: Hiệu suất Tài chính; }
+
+.Kênh bán hàng { grid-area: Kênh bán hàng; }
+
+.Doanh thu sản phẩm { grid-area: Doanh thu sản phẩm; }
+
+.Số lượng bán { grid-area: Số lượng bán; }
