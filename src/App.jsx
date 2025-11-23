@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { pipelineStages, pypPerformanceData } from './data/mockData';
 import PYPPerformance from './components/PYPPerformance';
 import SalesPipeline from './components/SalesPipeline';
@@ -10,6 +10,8 @@ import DoanhThuSanPham from './components/DoanhThuSanPham';
 import SoLuongBan from './components/SoLuongBan';
 
 function App() {
+    const [activeSection, setActiveSection] = useState('perf');
+    const [showScrollTop, setShowScrollTop] = useState(false);
     const currentMonth = pypPerformanceData[pypPerformanceData.length - 1];
     const kpiCompletion = Math.round((currentMonth.actual / currentMonth.target) * 100);
     const totalPipeline = pipelineStages.reduce((sum, stage) => sum + stage.count, 0);
@@ -19,23 +21,67 @@ function App() {
     const productRef = useRef(null);
     const financeRef = useRef(null);
 
-    const scrollToSection = (ref) => {
-        ref?.current?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const scrollToSection = (ref, alignBottom = false, forceCenter = false) => {
+        if (!ref?.current) return;
+        const rect = ref.current.getBoundingClientRect();
+        const offset = window.innerWidth < 768 ? 80 : 120;
+        const centerOffset = Math.max((window.innerHeight - rect.height) / 2, 0);
+        const top = alignBottom
+            ? rect.bottom + window.scrollY - window.innerHeight + offset
+            : forceCenter
+                ? rect.top + window.scrollY - centerOffset
+                : rect.top + window.scrollY - offset - centerOffset;
+        window.scrollTo({ top: Math.max(top, 0), behavior: prefersReducedMotion ? 'auto' : 'smooth' });
     };
+
+    // Detect section in viewport to highlight nav
+    useEffect(() => {
+        const sections = [
+            { key: 'perf', ref: perfRef },
+            { key: 'product', ref: productRef },
+            { key: 'finance', ref: financeRef }
+        ];
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const found = sections.find((s) => s.ref.current === entry.target);
+                        if (found) setActiveSection(found.key);
+                    }
+                });
+            },
+            { threshold: 0.5, rootMargin: '-10% 0px -10% 0px' }
+        );
+        sections.forEach((s) => s.ref.current && observer.observe(s.ref.current));
+        return () => observer.disconnect();
+    }, []);
+
+    useEffect(() => {
+        const onScroll = () => setShowScrollTop(window.scrollY > 400);
+        window.addEventListener('scroll', onScroll);
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
 
     return (
         <div className="dashboard-container">
             {/* Side quick-nav */}
-            <div className="fixed right-4 lg:right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30">
+            <div className="fixed right-3 lg:right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30">
                 {[
-                    { label: 'Hiệu suất', ref: perfRef },
-                    { label: 'Sản phẩm', ref: productRef },
-                    { label: 'Tài chính', ref: financeRef }
+                    { key: 'perf', label: 'Hiệu suất', ref: perfRef, alignBottom: false, forceCenter: false },
+                    { key: 'product', label: 'Sản phẩm', ref: productRef, alignBottom: false, forceCenter: true },
+                    { key: 'finance', label: 'Tài chính', ref: financeRef, alignBottom: true, forceCenter: false }
                 ].map((item) => (
                     <button
-                        key={item.label}
-                        onClick={() => scrollToSection(item.ref)}
-                        className="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-xs font-semibold text-white hover:bg-cyan-500/20 hover:border-cyan-400/60 transition shadow-[0_10px_30px_rgba(0,0,0,0.25)] backdrop-blur-md"
+                        key={item.key}
+                        onClick={() => scrollToSection(item.ref, item.alignBottom, item.forceCenter)}
+                        aria-label={`Đi tới ${item.label}`}
+                        className={`px-3 py-2 rounded-lg border text-xs font-semibold transition shadow-[0_10px_30px_rgba(0,0,0,0.25)] backdrop-blur-md ${
+                            activeSection === item.key
+                                ? 'bg-cyan-500/30 border-cyan-300 text-white'
+                                : 'bg-white/10 border-white/20 text-white hover:bg-cyan-500/20 hover:border-cyan-400/60'
+                        }`}
                     >
                         {item.label}
                     </button>
@@ -73,7 +119,7 @@ function App() {
 
                 <div className="relative space-y-8">
                     {/* Section: Hiệu suất & Pipeline */}
-                    <div ref={perfRef} className="space-y-3 min-h-screen flex flex-col scroll-mt-6">
+                    <div ref={perfRef} className="space-y-3 min-h-[70vh] md:min-h-[85vh] flex flex-col scroll-mt-[140px] md:scroll-mt-[160px]">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] text-emerald-300 uppercase tracking-[0.14em]">Hiệu suất & pipeline</p>
@@ -125,7 +171,7 @@ function App() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-12 auto-rows-[minmax(260px,auto)] gap-3 flex-1">
+                        <div className="grid grid-cols-12 auto-rows-[minmax(240px,auto)] gap-3 flex-1">
                             <div className="col-span-12 lg:col-span-4 min-w-0">
                                 <PYPPerformance />
                             </div>
@@ -136,22 +182,22 @@ function App() {
                     </div>
 
                     {/* Section: Sản phẩm & sản lượng */}
-                    <div ref={productRef} className="space-y-3 min-h-screen flex flex-col scroll-mt-6">
+                    <div ref={productRef} className="space-y-3 min-h-[70vh] md:min-h-[85vh] flex flex-col scroll-mt-[140px] md:scroll-mt-[160px]">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] text-emerald-300 uppercase tracking-[0.14em]">Sản phẩm & sản lượng</p>
                                 <h2 className="text-lg font-semibold text-white">Doanh thu theo dòng và số lượng bán</h2>
                             </div>
                         </div>
-                        <div className="grid grid-cols-12 auto-rows-[minmax(280px,auto)] gap-3 flex-1">
+                        <div className="grid grid-cols-12 auto-rows-[minmax(260px,auto)] gap-3 flex-1">
                             <div className="col-span-12 xl:col-span-8 min-w-0">
                                 <DoanhThuSanPham />
                             </div>
-                            <div className="col-span-12 xl:col-span-4 min-w-0 grid grid-rows-2 gap-3 auto-rows-[minmax(200px,auto)]">
-                                <div className="min-h-[240px]">
+                            <div className="col-span-12 xl:col-span-4 min-w-0 grid grid-rows-2 gap-3 auto-rows-[minmax(180px,auto)]">
+                                <div className="min-h-[200px]">
                                     <SoLuongBan />
                                 </div>
-                                <div className="min-h-[200px]">
+                                <div className="min-h-[180px]">
                                     <KenhBanHang />
                                 </div>
                             </div>
@@ -159,14 +205,14 @@ function App() {
                     </div>
 
                     {/* Section: Nhân sự & tài chính */}
-                    <div ref={financeRef} className="space-y-3 min-h-screen flex flex-col scroll-mt-6">
+                    <div ref={financeRef} className="space-y-3 min-h-[70vh] md:min-h-[85vh] flex flex-col scroll-mt-[140px] md:scroll-mt-[160px]">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] text-emerald-300 uppercase tracking-[0.14em]">Nhân sự & tài chính</p>
                                 <h2 className="text-lg font-semibold text-white">Chiến binh dẫn đầu, hiệu suất và tài chính</h2>
                             </div>
                         </div>
-                        <div className="grid grid-cols-12 auto-rows-[minmax(260px,auto)] gap-3 flex-1">
+                        <div className="grid grid-cols-12 auto-rows-[minmax(240px,auto)] gap-3 flex-1">
                             <div className="col-span-12 md:col-span-6 xl:col-span-6 min-w-0">
                                 <ChienBinhSales />
                             </div>
@@ -180,6 +226,16 @@ function App() {
                     </div>
                 </div>
             </div>
+
+            {showScrollTop && (
+                <button
+                    onClick={() => window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' })}
+                    className="fixed right-3 bottom-4 lg:right-6 lg:bottom-6 px-3 py-2 rounded-full bg-white/15 border border-white/25 text-xs font-semibold text-white hover:bg-cyan-500/30 hover:border-cyan-300 transition shadow-[0_10px_30px_rgba(0,0,0,0.3)] backdrop-blur-md z-30"
+                    aria-label="Lên đầu trang"
+                >
+                    Lên đầu
+                </button>
+            )}
         </div>
     );
 }

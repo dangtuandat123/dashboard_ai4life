@@ -31,34 +31,50 @@ const DoanhThuSanPham = () => {
             </div>
 
             <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
-                <div className="col-span-12 lg:col-span-4 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-indigo-500/10 rounded-xl border border-cyan-500/30 p-3 flex flex-col">
-                    <div className="text-[10px] text-slate-300 mb-1">Tổng doanh thu</div>
-                    <div className="text-2xl font-bold text-white mb-1">
+                {/* KPI gọn hơn */}
+                <div className="col-span-12 lg:col-span-3 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-indigo-500/10 rounded-xl border border-cyan-500/30 p-3 flex flex-col">
+                    <div className="flex items-center justify-between text-[11px] text-slate-300 mb-1">
+                        <span>Tổng doanh thu</span>
+                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] border border-white/10">Toàn bộ</span>
+                    </div>
+                    <div className="text-xl font-bold text-white leading-tight">
                         {totalRevenue} <span className="text-sm text-slate-300">tỷ</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1 text-[12px] mt-1">
                         <span className={`${overallPercent >= 100 ? 'text-emerald-400' : 'text-amber-300'} font-semibold`}>
                             {overallPercent}% mục tiêu
                         </span>
                         <span className="text-[11px] text-slate-400">/ {totalTarget} tỷ</span>
                     </div>
-                    <div className="mt-3 space-y-1.5">
+                    <div className="mt-2 space-y-1">
                         <div className="flex justify-between text-[11px] text-slate-300">
                             <span>Hoàn thành</span>
                             <span>{overallPercent}%</span>
                         </div>
-                        <div className="h-2 bg-slate-900/50 rounded-full overflow-hidden border border-white/5">
+                        <div className="h-1.5 bg-slate-900/50 rounded-full overflow-hidden border border-white/5">
                             <div
-                                className="h-full bg-gradient-to-r from-cyan-500 via-emerald-400 to-lime-400 shadow-[0_0_15px_rgba(34,211,238,0.4)]"
+                                className="h-full bg-gradient-to-r from-cyan-500 via-emerald-400 to-lime-400 shadow-[0_0_10px_rgba(34,211,238,0.3)]"
                                 style={{ width: `${Math.min(overallPercent, 120)}%` }}
                             />
                         </div>
-                        <div className="text-[11px] text-slate-400">Nổi bật: chọn dòng bên phải để xem chi tiết</div>
                     </div>
+                    {activeLine && (
+                        <div className="mt-3 p-2 rounded-lg bg-white/5 border border-white/10">
+                            <div className="text-[10px] text-slate-400 uppercase tracking-[0.08em]">Dòng đang xem</div>
+                            <div className="flex items-center justify-between text-sm text-white font-semibold">
+                                <span className="truncate">{activeLine.name}</span>
+                                <span className={activePercent >= 100 ? 'text-emerald-400' : 'text-amber-300'}>{activePercent}% KPI</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                <div className="col-span-12 lg:col-span-4 flex flex-col gap-2 overflow-hidden">
-                    <div className="text-[10px] text-slate-400 uppercase tracking-[0.08em]">Dòng sản phẩm</div>
+                {/* Dòng sản phẩm */}
+                <div className="col-span-12 lg:col-span-5 flex flex-col gap-2 overflow-hidden">
+                    <div className="flex items-center justify-between">
+                        <div className="text-[10px] text-slate-400 uppercase tracking-[0.08em]">Dòng sản phẩm</div>
+                        <span className="text-[11px] text-slate-400">Top {productLines.length}</span>
+                    </div>
                     <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-y-auto pr-1">
                         {productLines.map((line) => {
                             const percentage = Math.round((line.revenue / line.target) * 100);
@@ -92,14 +108,16 @@ const DoanhThuSanPham = () => {
                                         </div>
                                     </div>
                                     <div className="mt-1 flex items-center justify-between text-xs text-slate-300">
-                                        <span>{line.revenue} tỷ / {line.target} tỷ</span>
-                                        <span className={percentage >= 100 ? 'text-emerald-400' : 'text-amber-300'}>
-                                            {percentage}%
+                                        <span>
+                                            {line.revenue} tỷ / {line.target} tỷ
                                         </span>
+                                        <span className={percentage >= 100 ? 'text-emerald-400' : 'text-amber-300'}>{percentage}%</span>
                                     </div>
                                     <div className="mt-2 h-2 bg-slate-900/50 rounded-full overflow-hidden border border-white/5">
                                         <div
-                                            className={`h-full ${percentage >= 100 ? 'bg-gradient-to-r from-emerald-400 to-lime-400' : 'bg-gradient-to-r from-amber-400 to-orange-500'}`}
+                                            className={`h-full ${
+                                                percentage >= 100 ? 'bg-gradient-to-r from-emerald-400 to-lime-400' : 'bg-gradient-to-r from-amber-400 to-orange-500'
+                                            }`}
                                             style={{ width: `${Math.min(percentage, 120)}%` }}
                                         />
                                     </div>
@@ -109,6 +127,7 @@ const DoanhThuSanPham = () => {
                     </div>
                 </div>
 
+                {/* Loại sản phẩm */}
                 <div className="col-span-12 lg:col-span-4 flex flex-col gap-2 overflow-hidden">
                     <div className="flex items-center justify-between">
                         <div className="text-[10px] text-slate-400 uppercase tracking-[0.08em]">Loại sản phẩm</div>

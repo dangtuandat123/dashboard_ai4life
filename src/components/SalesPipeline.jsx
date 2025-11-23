@@ -5,6 +5,9 @@ const SalesPipeline = () => {
     const [activeIndex, setActiveIndex] = useState(null);
 
     const maxCount = Math.max(...pipelineStages.map((d) => d.count));
+    const total = pipelineStages.reduce((sum, d) => sum + d.count, 0);
+    const issued = pipelineStages[pipelineStages.length - 1]?.count || 0;
+    const conversion = total ? Math.round((issued / total) * 100) : 0;
     const minHeight = 110;
     const maxHeight = 260;
     const svgWidth = 1200;
@@ -63,19 +66,23 @@ const SalesPipeline = () => {
 
     return (
         <div className="glass rounded-xl p-3 h-full flex flex-col border border-white/10 backdrop-blur-md">
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between gap-2 flex-wrap">
                 <div>
                     <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Pipeline</p>
                     <h3 className="text-sm font-semibold text-white">Sales Pipeline</h3>
                     <p className="text-[10px] text-slate-400">Luồng pipeline theo giai đoạn</p>
                 </div>
-                <div className="text-right">
-                    <div className="text-[10px] text-slate-400">Độ phủ</div>
-                    <div className="text-sm font-semibold text-white">{maxCount} hồ sơ đỉnh</div>
+                <div className="flex items-center gap-2 text-xs">
+                    <div className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-white">
+                        Tổng: <span className="font-semibold">{total}</span> lead
+                    </div>
+                    <div className="px-2 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-200">
+                        Chốt/đầu vào: <span className="font-semibold">{conversion}%</span>
+                    </div>
                 </div>
             </div>
 
-            <div className="relative flex-1 min-h-[320px] w-full">
+            <div className="relative flex-1 min-h-[300px] w-full">
                 <div
                     className="absolute inset-0 pointer-events-none opacity-20"
                     style={{
@@ -142,6 +149,7 @@ const SalesPipeline = () => {
                     {points.map((pt, index) => {
                         const isActive = activeIndex === index;
                         const isDimmed = activeIndex !== null && activeIndex !== index;
+                        const rate = index === 0 ? 100 : Math.round((pt.data.count / points[0].data.count) * 100);
                         return (
                             <div
                                 key={pt.data.id}
@@ -151,6 +159,7 @@ const SalesPipeline = () => {
                                 style={{ left: `${(pt.x / svgWidth) * 100}%`, top: '50%' }}
                                 onMouseEnter={() => setActiveIndex(index)}
                                 onMouseLeave={() => setActiveIndex(null)}
+                                onClick={() => setActiveIndex(isActive ? null : index)}
                             >
                                 <div className="relative group cursor-pointer flex flex-col items-center">
                                     <div
@@ -174,16 +183,17 @@ const SalesPipeline = () => {
                                         </span>
                                     </div>
 
-                                    <div className={`mt-5 text-center transition-all duration-300 w-32 ${isActive ? 'translate-y-1' : ''}`}>
+                                    <div className={`mt-4 text-center transition-all duration-300 w-32 ${isActive ? 'translate-y-1' : ''}`}>
                                         <p
-                                            className={`text-xs md:text-sm font-bold uppercase tracking-widest text-slate-300 mb-2 drop-shadow-md ${
+                                            className={`text-xs md:text-sm font-bold uppercase tracking-widest text-slate-300 mb-1 drop-shadow-md ${
                                                 isActive ? 'text-white' : ''
                                             }`}
                                         >
                                             {pt.data.label}
                                         </p>
+                                        <div className="text-[11px] text-slate-300">{rate}% so với đầu vào</div>
                                         <div
-                                            className={`w-2 h-2 rounded-full mx-auto transition-all duration-300 ${
+                                            className={`mt-1 w-2 h-2 rounded-full mx-auto transition-all duration-300 ${
                                                 isActive ? 'w-8 h-1.5 rounded-lg brightness-150' : ''
                                             }`}
                                             style={{ backgroundColor: pt.data.color }}

@@ -5,7 +5,7 @@ import { financialData } from '../data/mockData';
 
 const HieuSuatTaiChinh = () => {
     return (
-        <div className="glass rounded-xl p-3 h-full min-h-[240px] flex flex-col border border-white/10 backdrop-blur-md">
+        <div className="glass rounded-xl p-3 h-full min-h-[220px] flex flex-col border border-white/10 backdrop-blur-md">
             <div className="mb-2 flex items-center justify-between">
                 <div>
                     <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Financials</p>
