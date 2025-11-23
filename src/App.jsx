@@ -71,62 +71,61 @@ function App() {
                     </div>
                 </div>
 
-                {/* Quick stats */}
-                <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-                    <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
-                        <p className="text-[10px] text-emerald-400 uppercase tracking-[0.12em]">KPI tháng</p>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-bold text-white">{currentMonth.actual} tỷ</span>
-                            <span className="text-xs text-emerald-300 font-semibold">{kpiCompletion}% KPI</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400">Mục tiêu: {currentMonth.target} tỷ</p>
-                    </div>
-
-                    <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
-                        <p className="text-[10px] text-cyan-300 uppercase tracking-[0.12em]">Pipeline</p>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-white">{totalPipeline}</span>
-                            <span className="text-xs text-slate-300">lead/khách hàng</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400">Giai đoạn nóng: {hottestStage.label}</p>
-                    </div>
-
-                    <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
-                        <p className="text-[10px] text-purple-300 uppercase tracking-[0.12em]">Giai đoạn đỉnh</p>
-                        <div className="flex items-center gap-2">
-                            <span
-                                className="h-2.5 w-2.5 rounded-full"
-                                style={{
-                                    backgroundColor: hottestStage.color,
-                                    boxShadow: `0 0 10px ${hottestStage.color}80`
-                                }}
-                            />
-                            <span className="text-sm font-semibold text-white">{hottestStage.label}</span>
-                            <span className="text-xs text-slate-400">({hottestStage.count} hồ sơ)</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400">Ưu tiên xử lý trước</p>
-                    </div>
-
-                    <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
-                        <p className="text-[10px] text-emerald-300 uppercase tracking-[0.12em]">Trạng thái</p>
-                        <div className="flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                            <span className="text-sm font-semibold text-white">Sẵn sàng hành động</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400">Nguồn lực đầy đủ</p>
-                    </div>
-                </div>
-
                 <div className="relative space-y-8">
                     {/* Section: Hiệu suất & Pipeline */}
-                    <div ref={perfRef} className="space-y-3">
+                    <div ref={perfRef} className="space-y-3 min-h-screen flex flex-col scroll-mt-6">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] text-emerald-300 uppercase tracking-[0.14em]">Hiệu suất & pipeline</p>
                                 <h2 className="text-lg font-semibold text-white">Theo dõi KPI và luồng bán hàng</h2>
                             </div>
                         </div>
-                        <div className="grid grid-cols-12 auto-rows-[minmax(260px,auto)] gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
+                                <p className="text-[10px] text-emerald-400 uppercase tracking-[0.12em]">KPI tháng</p>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-2xl font-bold text-white">{currentMonth.actual} tỷ</span>
+                                    <span className="text-xs text-emerald-300 font-semibold">{kpiCompletion}% KPI</span>
+                                </div>
+                                <p className="text-[11px] text-slate-400">Mục tiêu: {currentMonth.target} tỷ</p>
+                            </div>
+
+                            <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
+                                <p className="text-[10px] text-cyan-300 uppercase tracking-[0.12em]">Pipeline</p>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-2xl font-bold text-white">{totalPipeline}</span>
+                                    <span className="text-xs text-slate-300">lead/khách hàng</span>
+                                </div>
+                                <p className="text-[11px] text-slate-400">Giai đoạn nóng: {hottestStage.label}</p>
+                            </div>
+
+                            <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
+                                <p className="text-[10px] text-purple-300 uppercase tracking-[0.12em]">Giai đoạn đỉnh</p>
+                                <div className="flex items-center gap-2">
+                                    <span
+                                        className="h-2.5 w-2.5 rounded-full"
+                                        style={{
+                                            backgroundColor: hottestStage.color,
+                                            boxShadow: `0 0 10px ${hottestStage.color}80`
+                                        }}
+                                    />
+                                    <span className="text-sm font-semibold text-white">{hottestStage.label}</span>
+                                    <span className="text-xs text-slate-400">({hottestStage.count} hồ sơ)</span>
+                                </div>
+                                <p className="text-[11px] text-slate-400">Ưu tiên xử lý trước</p>
+                            </div>
+
+                            <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
+                                <p className="text-[10px] text-emerald-300 uppercase tracking-[0.12em]">Trạng thái</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                                    <span className="text-sm font-semibold text-white">Sẵn sàng hành động</span>
+                                </div>
+                                <p className="text-[11px] text-slate-400">Nguồn lực đầy đủ</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-12 auto-rows-[minmax(260px,auto)] gap-3 flex-1">
                             <div className="col-span-12 lg:col-span-4 min-w-0">
                                 <PYPPerformance />
                             </div>
@@ -137,14 +136,14 @@ function App() {
                     </div>
 
                     {/* Section: Sản phẩm & sản lượng */}
-                    <div ref={productRef} className="space-y-3">
+                    <div ref={productRef} className="space-y-3 min-h-screen flex flex-col scroll-mt-6">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] text-emerald-300 uppercase tracking-[0.14em]">Sản phẩm & sản lượng</p>
                                 <h2 className="text-lg font-semibold text-white">Doanh thu theo dòng và số lượng bán</h2>
                             </div>
                         </div>
-                        <div className="grid grid-cols-12 auto-rows-[minmax(280px,auto)] gap-3">
+                        <div className="grid grid-cols-12 auto-rows-[minmax(280px,auto)] gap-3 flex-1">
                             <div className="col-span-12 xl:col-span-8 min-w-0">
                                 <DoanhThuSanPham />
                             </div>
@@ -160,14 +159,14 @@ function App() {
                     </div>
 
                     {/* Section: Nhân sự & tài chính */}
-                    <div ref={financeRef} className="space-y-3">
+                    <div ref={financeRef} className="space-y-3 min-h-screen flex flex-col scroll-mt-6">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-[10px] text-emerald-300 uppercase tracking-[0.14em]">Nhân sự & tài chính</p>
                                 <h2 className="text-lg font-semibold text-white">Chiến binh dẫn đầu, hiệu suất và tài chính</h2>
                             </div>
                         </div>
-                        <div className="grid grid-cols-12 auto-rows-[minmax(260px,auto)] gap-3">
+                        <div className="grid grid-cols-12 auto-rows-[minmax(260px,auto)] gap-3 flex-1">
                             <div className="col-span-12 md:col-span-6 xl:col-span-6 min-w-0">
                                 <ChienBinhSales />
                             </div>

@@ -2,90 +2,72 @@ import React, { useMemo, useState } from 'react';
 import { pipelineStages } from '../data/mockData';
 
 const SalesPipeline = () => {
-    const [hoveredStage, setHoveredStage] = useState(null);
+    const [activeIndex, setActiveIndex] = useState(null);
 
-    const width = 100;
-    const height = 100;
-    const maxCount = Math.max(...pipelineStages.map((stage) => stage.count));
+    const maxCount = Math.max(...pipelineStages.map((d) => d.count));
+    const minHeight = 110;
+    const maxHeight = 260;
+    const svgWidth = 1200;
+    const svgHeight = 500;
+    const centerY = svgHeight / 2;
+    const paddingX = 120;
+    const usableWidth = svgWidth - paddingX * 2;
+    const segmentWidth = pipelineStages.length > 1 ? usableWidth / (pipelineStages.length - 1) : usableWidth;
 
-    const stagePositions = useMemo(() => {
-        const positions = [];
-        const segmentWidth = pipelineStages.length > 1 ? width / (pipelineStages.length - 1) : width;
-
-        pipelineStages.forEach((stage, index) => {
-            const x = index * segmentWidth;
-            const heightPercent = (stage.count / maxCount) * 50;
-            positions.push({ x, y: 50, height: heightPercent, ...stage });
-        });
-
-        return positions;
-    }, [maxCount]);
-
-    const createPipelinePath = () => {
-        if (stagePositions.length === 0) return '';
-
-        let topPath = '';
-        let bottomPath = '';
-
-        stagePositions.forEach((pos, index) => {
-            const topY = pos.y - pos.height / 2;
-            const bottomY = pos.y + pos.height / 2;
-
-            if (index === 0) {
-                topPath = `M 0,${topY}`;
-                bottomPath = `M 0,${bottomY}`;
-            }
-
-            if (index < stagePositions.length - 1) {
-                const nextPos = stagePositions[index + 1];
-                const nextTopY = nextPos.y - nextPos.height / 2;
-                const nextBottomY = nextPos.y + nextPos.height / 2;
-                const controlPointX = (pos.x + nextPos.x) / 2;
-
-                topPath += ` C ${controlPointX},${topY} ${controlPointX},${nextTopY} ${nextPos.x},${nextTopY}`;
-                bottomPath += ` C ${controlPointX},${bottomY} ${controlPointX},${nextBottomY} ${nextPos.x},${nextBottomY}`;
-            }
-        });
-
-        const lastPos = stagePositions[stagePositions.length - 1];
-        const lastTopY = lastPos.y - lastPos.height / 2;
-        const lastBottomY = lastPos.y + lastPos.height / 2;
-        topPath += ` L ${width},${lastTopY}`;
-        bottomPath += ` L ${width},${lastBottomY}`;
-
-        const reversedBottom = bottomPath.split(' ').reverse().join(' ');
-        return `${topPath} ${reversedBottom} Z`;
-    };
-
-    const gradient = (
-        <defs>
-            <linearGradient id="pipelineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                {pipelineStages.map((stage, index) => (
-                    <stop
-                        key={stage.id}
-                        offset={`${(index / (pipelineStages.length - 1 || 1)) * 100}%`}
-                        stopColor={stage.color}
-                        stopOpacity="0.6"
-                    />
-                ))}
-            </linearGradient>
-            <filter id="glow">
-                <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-                <feMerge>
-                    <feMergeNode in="coloredBlur" />
-                    <feMergeNode in="SourceGraphic" />
-                </feMerge>
-            </filter>
-        </defs>
+    const points = useMemo(
+        () =>
+            pipelineStages.map((item, index) => {
+                const height = minHeight + (item.count / maxCount) * (maxHeight - minHeight);
+                const x = paddingX + index * segmentWidth;
+                return {
+                    x,
+                    yTop: centerY - height / 2,
+                    yBottom: centerY + height / 2,
+                    data: item,
+                    height
+                };
+            }),
+        [maxCount]
     );
 
+    const pathD = useMemo(() => {
+        if (!points.length) return '';
+        let path = `M ${points[0].x} ${points[0].yTop}`;
+
+        for (let i = 0; i < points.length - 1; i++) {
+            const p1 = points[i];
+            const p2 = points[i + 1];
+            const cp1x = p1.x + (p2.x - p1.x) * 0.5;
+            const cp2x = p2.x - (p2.x - p1.x) * 0.5;
+            path += ` C ${cp1x} ${p1.yTop}, ${cp2x} ${p2.yTop}, ${p2.x} ${p2.yTop}`;
+        }
+
+        const lastPt = points[points.length - 1];
+        const lastRadius = lastPt.height / 2;
+        path += ` A ${lastRadius} ${lastRadius} 0 0 1 ${lastPt.x} ${lastPt.yBottom}`;
+
+        const reversed = [...points].reverse();
+        for (let i = 0; i < reversed.length - 1; i++) {
+            const p1 = reversed[i];
+            const p2 = reversed[i + 1];
+            const cp1x = p1.x + (p2.x - p1.x) * 0.5;
+            const cp2x = p2.x - (p2.x - p1.x) * 0.5;
+            path += ` C ${cp1x} ${p1.yBottom}, ${cp2x} ${p2.yBottom}, ${p2.x} ${p2.yBottom}`;
+        }
+
+        const firstPt = points[0];
+        const firstRadius = firstPt.height / 2;
+        path += ` A ${firstRadius} ${firstRadius} 0 0 1 ${firstPt.x} ${firstPt.yTop}`;
+        return `${path} Z`;
+    }, [points]);
+
     return (
-        <div className="glass rounded-xl p-3 h-full relative overflow-hidden border border-white/10 backdrop-blur-md">
+        <div className="glass rounded-xl p-3 h-full flex flex-col border border-white/10 backdrop-blur-md">
             <div className="mb-3 flex items-center justify-between">
                 <div>
                     <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Pipeline</p>
                     <h3 className="text-sm font-semibold text-white">Sales Pipeline</h3>
-                    <p className="text-[10px] text-slate-400">Biến động pipeline theo giai đoạn</p>
+                    <p className="text-[10px] text-slate-400">Luồng pipeline theo giai đoạn</p>
                 </div>
                 <div className="text-right">
                     <div className="text-[10px] text-slate-400">Độ phủ</div>
@@ -93,53 +75,124 @@ const SalesPipeline = () => {
                 </div>
             </div>
 
-            <div className="relative h-[calc(100%-60px)]">
-                <svg className="absolute inset-0 w-full h-full opacity-20" viewBox={`0 0 ${width} ${height}`}>
-                    <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#475569" strokeWidth="0.5" />
-                    </pattern>
-                    <rect width="100%" height="100%" fill="url(#grid)" />
-                </svg>
+            <div className="relative flex-1 min-h-[320px] w-full">
+                <div
+                    className="absolute inset-0 pointer-events-none opacity-20"
+                    style={{
+                        backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)',
+                        backgroundSize: '24px 24px'
+                    }}
+                />
 
-                <svg className="absolute inset-0 w-full h-full" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-                    {gradient}
-                    <path d={createPipelinePath()} fill="url(#pipelineGradient)" filter="url(#glow)" opacity="0.35" />
-                    <path d={createPipelinePath()} fill="url(#pipelineGradient)" opacity="0.55" stroke="url(#pipelineGradient)" strokeWidth="0.5" />
+                <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full drop-shadow-2xl" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                        <linearGradient id="pipelineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            {points.map((pt, i) => (
+                                <stop
+                                    key={pt.data.id}
+                                    offset={`${(i / (points.length - 1)) * 100}%`}
+                                    stopColor={pt.data.color}
+                                    stopOpacity="0.5"
+                                />
+                            ))}
+                        </linearGradient>
+                        <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="12" result="coloredBlur" />
+                            <feMerge>
+                                <feMergeNode in="coloredBlur" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    </defs>
+
+                    <path d={pathD} fill="none" stroke="url(#pipelineGradient)" strokeWidth="8" filter="url(#neonGlow)" opacity="0.6" />
+
+                    <path
+                        d={pathD}
+                        fill="url(#pipelineGradient)"
+                        stroke="white"
+                        strokeWidth="1.5"
+                        strokeOpacity="0.2"
+                        className="transition-all duration-500"
+                    />
+
+                    <path
+                        d={`M ${points[0]?.x || 0} ${centerY} L ${points[points.length - 1]?.x || 0} ${centerY}`}
+                        stroke="white"
+                        strokeWidth="1"
+                        strokeDasharray="6,6"
+                        opacity="0.15"
+                    />
+
+                    {points.map((pt) => (
+                        <line
+                            key={`line-${pt.data.id}`}
+                            x1={pt.x}
+                            y1={centerY - pt.height / 2}
+                            x2={pt.x}
+                            y2={centerY + pt.height / 2}
+                            stroke={pt.data.color}
+                            strokeWidth="1"
+                            opacity="0.3"
+                        />
+                    ))}
                 </svg>
 
                 <div className="absolute inset-0">
-                    {stagePositions.map((pos) => (
-                        <div
-                            key={pos.id}
-                            className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
-                            style={{
-                                left: `${(pos.x / width) * 100}%`,
-                                top: '50%',
-                                opacity: hoveredStage === null || hoveredStage === pos.id ? 1 : 0.3,
-                                transform:
-                                    hoveredStage === pos.id
-                                        ? 'translate(-50%, -50%) scale(1.12)'
-                                        : 'translate(-50%, -50%) scale(1)'
-                            }}
-                            onMouseEnter={() => setHoveredStage(pos.id)}
-                            onMouseLeave={() => setHoveredStage(null)}
-                        >
-                            <div className="flex flex-col items-center gap-1 cursor-pointer">
-                                <div
-                                    className="rounded-full px-3 py-1 font-bold text-sm shadow-lg transition-all text-slate-900"
-                                    style={{
-                                        backgroundColor: pos.color,
-                                        boxShadow: hoveredStage === pos.id ? `0 0 20px ${pos.color}80` : 'none'
-                                    }}
-                                >
-                                    {pos.count}
-                                </div>
-                                <div className="text-[10px] font-medium text-center text-white whitespace-nowrap px-2 py-0.5 rounded bg-slate-900/70 backdrop-blur-sm border border-white/5">
-                                    {pos.label}
+                    {points.map((pt, index) => {
+                        const isActive = activeIndex === index;
+                        const isDimmed = activeIndex !== null && activeIndex !== index;
+                        return (
+                            <div
+                                key={pt.data.id}
+                                className={`absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center transition-all duration-500 ease-out ${
+                                    isDimmed ? 'opacity-30 blur-[1px] scale-95' : 'opacity-100 scale-100'
+                                }`}
+                                style={{ left: `${(pt.x / svgWidth) * 100}%`, top: '50%' }}
+                                onMouseEnter={() => setActiveIndex(index)}
+                                onMouseLeave={() => setActiveIndex(null)}
+                            >
+                                <div className="relative group cursor-pointer flex flex-col items-center">
+                                    <div
+                                        className={`absolute inset-0 rounded-full bg-white/30 blur-lg transform scale-150 transition-opacity duration-300 ${
+                                            isActive ? 'opacity-100 animate-pulse' : 'opacity-0'
+                                        }`}
+                                    />
+
+                                    <div
+                                        className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center backdrop-blur-xl border-2 shadow-2xl transition-all duration-300 ease-out ${
+                                            isActive ? 'scale-125 border-white' : 'hover:scale-110 border-white/20'
+                                        }`}
+                                        style={{
+                                            backgroundColor: `${pt.data.color}20`,
+                                            borderColor: isActive ? 'white' : `${pt.data.color}66`,
+                                            boxShadow: isActive ? `0 0 40px ${pt.data.color}80` : `0 10px 20px -5px black`
+                                        }}
+                                    >
+                                        <span className="text-2xl md:text-3xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                                            {pt.data.count}
+                                        </span>
+                                    </div>
+
+                                    <div className={`mt-5 text-center transition-all duration-300 w-32 ${isActive ? 'translate-y-1' : ''}`}>
+                                        <p
+                                            className={`text-xs md:text-sm font-bold uppercase tracking-widest text-slate-300 mb-2 drop-shadow-md ${
+                                                isActive ? 'text-white' : ''
+                                            }`}
+                                        >
+                                            {pt.data.label}
+                                        </p>
+                                        <div
+                                            className={`w-2 h-2 rounded-full mx-auto transition-all duration-300 ${
+                                                isActive ? 'w-8 h-1.5 rounded-lg brightness-150' : ''
+                                            }`}
+                                            style={{ backgroundColor: pt.data.color }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         </div>

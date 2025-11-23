@@ -1,0 +1,235 @@
+import React, { useState } from 'react';
+
+const SalesPipeline = () => {
+  // State để xử lý hiệu ứng khi di chuột (Focus mode)
+  const [activeIndex, setActiveIndex] = useState(null);
+
+  // 1. Cấu hình Dữ liệu & Màu sắc
+  const pipelineData = [
+    { id: 1, count: 20, label: "LEADS MỚI", colorHex: "#3b82f6" },   // Xanh dương
+    { id: 2, count: 85, label: "ĐANG TƯ VẤN", colorHex: "#8b5cf6" }, // Tím
+    { id: 3, count: 100, label: "ĐANG CHỐT", colorHex: "#d946ef" },  // Hồng tím
+    { id: 4, count: 18, label: "THẨM ĐỊNH", colorHex: "#f97316" },  // Cam
+    { id: 5, count: 12, label: "PHÁT HÀNH", colorHex: "#14b8a6" }     // Xanh ngọc
+  ];
+
+  // 2. Tính toán hình học
+  const maxCount = Math.max(...pipelineData.map(d => d.count));
+  const minHeight = 100; // Tăng độ dày tối thiểu một chút để bo tròn đẹp hơn bao trọn nút
+  const maxHeight = 300; 
+  
+  const svgWidth = 1200;
+  const svgHeight = 500;
+  const centerY = svgHeight / 2;
+  
+  // Tăng paddingX lên 100 để chừa chỗ cho đầu bo tròn (Radius của đầu tròn ~ minHeight/2 = 50px)
+  const paddingX = 100; 
+  const usableWidth = svgWidth - (paddingX * 2);
+  const segmentWidth = usableWidth / (pipelineData.length - 1); 
+
+  // Tạo danh sách tọa độ các điểm mốc (Nodes)
+  const points = pipelineData.map((item, index) => {
+    const height = minHeight + (item.count / maxCount) * (maxHeight - minHeight);
+    const x = paddingX + (index * segmentWidth);
+    return {
+      x,
+      yTop: centerY - height / 2,
+      yBottom: centerY + height / 2,
+      data: item,
+      height
+    };
+  });
+
+  // 3. Hàm tạo đường cong với đầu bo tròn (Rounded Caps Logic)
+  const createPath = () => {
+    // Bắt đầu từ điểm trên cùng của nút đầu tiên
+    let path = `M ${points[0].x} ${points[0].yTop}`;
+    
+    // --- VẼ CẠNH TRÊN (Top Curve) ---
+    for (let i = 0; i < points.length - 1; i++) {
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const cp1x = p1.x + (p2.x - p1.x) * 0.5;
+      const cp1y = p1.yTop;
+      const cp2x = p2.x - (p2.x - p1.x) * 0.5;
+      const cp2y = p2.yTop;
+      
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.yTop}`;
+    }
+
+    // --- VẼ ĐẦU MÚT PHẢI (Right Cap) ---
+    // Vẽ cung tròn từ yTop xuống yBottom tại điểm cuối cùng
+    // Cú pháp Arc: A rx ry x-axis-rotation large-arc-flag sweep-flag x y
+    const lastPt = points[points.length - 1];
+    const lastRadius = lastPt.height / 2;
+    path += ` A ${lastRadius} ${lastRadius} 0 0 1 ${lastPt.x} ${lastPt.yBottom}`;
+
+    // --- VẼ CẠNH DƯỚI (Bottom Curve - Ngược về) ---
+    const reversedPoints = [...points].reverse();
+    for (let i = 0; i < reversedPoints.length - 1; i++) {
+        const p1 = reversedPoints[i];
+        const p2 = reversedPoints[i+1];
+        const cp1x = p1.x + (p2.x - p1.x) * 0.5;
+        const cp1y = p1.yBottom;
+        const cp2x = p2.x - (p2.x - p1.x) * 0.5;
+        const cp2y = p2.yBottom;
+        path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.yBottom}`;
+    }
+
+    // --- VẼ ĐẦU MÚT TRÁI (Left Cap) ---
+    // Vẽ cung tròn từ yBottom lên yTop tại điểm đầu tiên để khép kín
+    const firstPt = points[0];
+    const firstRadius = firstPt.height / 2;
+    path += ` A ${firstRadius} ${firstRadius} 0 0 1 ${firstPt.x} ${firstPt.yTop}`;
+
+    return `${path} Z`; // Khép kín đường dẫn
+  };
+
+  const pathD = createPath();
+
+  return (
+    <div className="min-h-screen bg-[#0b0d14] flex flex-col justify-center items-center font-sans overflow-hidden relative selection:bg-blue-500/30">
+      
+      {/* Background Grid */}
+      <div className="absolute inset-0 pointer-events-none opacity-20" 
+           style={{ backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)', backgroundSize: '30px 30px' }}>
+      </div>
+
+      {/* Header */}
+      <div className="mb-12 text-center z-10 relative">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-teal-400 drop-shadow-sm">
+          Sales Pipeline
+        </h1>
+        <p className="text-slate-400 mt-3 font-medium tracking-wide">Dữ liệu dòng chảy thời gian thực</p>
+      </div>
+
+      {/* Main Chart Container */}
+      <div className="relative w-full max-w-7xl aspect-[2.5/1] mx-4">
+        
+        <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full drop-shadow-2xl" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              {points.map((pt, i) => (
+                <stop 
+                  key={i} 
+                  offset={`${(i / (points.length - 1)) * 100}%`} 
+                  stopColor={pt.data.colorHex} 
+                  stopOpacity="0.5" 
+                />
+              ))}
+            </linearGradient>
+
+            <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="12" result="coloredBlur" />
+                <feMerge>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+          </defs>
+
+          {/* Đường viền phát sáng */}
+          <path 
+            d={pathD} 
+            fill="none" 
+            stroke="url(#mainGradient)" 
+            strokeWidth="8" 
+            filter="url(#neonGlow)" 
+            opacity="0.6" 
+          />
+
+          {/* Thân ống chính */}
+          <path 
+            d={pathD} 
+            fill="url(#mainGradient)" 
+            stroke="white" 
+            strokeWidth="1.5" 
+            strokeOpacity="0.2"
+            className="transition-all duration-500"
+          />
+
+          {/* Đường trục giữa (chỉ vẽ trong khoảng pipe) */}
+          <path 
+            d={`M ${points[0].x} ${centerY} L ${points[points.length-1].x} ${centerY}`} 
+            stroke="white" 
+            strokeWidth="1" 
+            strokeDasharray="6,6" 
+            opacity="0.15" 
+          />
+
+           {/* Các đường dọc */}
+           {points.map((pt, index) => (
+            <line 
+              key={`line-${index}`}
+              x1={pt.x} y1={centerY - pt.height/2} 
+              x2={pt.x} y2={centerY + pt.height/2} 
+              stroke={pt.data.colorHex} 
+              strokeWidth="1" 
+              opacity="0.3"
+            />
+           ))}
+        </svg>
+
+        {/* Nút thông tin tương tác */}
+        <div className="absolute inset-0">
+          {points.map((pt, index) => {
+             const isActive = activeIndex === index;
+             const isDimmed = activeIndex !== null && activeIndex !== index;
+
+             return (
+              <div 
+                key={index}
+                className={`absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center transition-all duration-500 ease-out ${isDimmed ? 'opacity-30 blur-[1px] scale-95' : 'opacity-100 scale-100'}`}
+                style={{ left: `${(pt.x / svgWidth) * 100}%`, top: '50%' }}
+                onMouseEnter={() => setActiveIndex(index)}
+                onMouseLeave={() => setActiveIndex(null)}
+              >
+                
+                <div className="relative group cursor-pointer flex flex-col items-center">
+                   <div className={`absolute inset-0 rounded-full bg-white/30 blur-lg transform scale-150 transition-opacity duration-300 ${isActive ? 'opacity-100 animate-pulse' : 'opacity-0'}`}></div>
+
+                   <div 
+                     className={`
+                       w-16 h-16 md:w-20 md:h-20 rounded-full 
+                       flex items-center justify-center 
+                       backdrop-blur-xl border-2 
+                       shadow-2xl transition-all duration-300 ease-out
+                       ${isActive ? 'scale-125 border-white' : 'hover:scale-110 border-white/20'}
+                     `}
+                     style={{ 
+                        backgroundColor: `${pt.data.colorHex}20`, 
+                        borderColor: isActive ? 'white' : `${pt.data.colorHex}66`,
+                        boxShadow: isActive ? `0 0 40px ${pt.data.colorHex}80` : `0 10px 20px -5px black`
+                     }}
+                   >
+                      <span className="text-2xl md:text-3xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                        {pt.data.count}
+                      </span>
+                   </div>
+
+                   <div className={`
+                      mt-5 text-center transition-all duration-300 w-32
+                      ${isActive ? 'translate-y-1' : ''}
+                   `}>
+                      <p className={`text-xs md:text-sm font-bold uppercase tracking-widest text-slate-300 mb-2 drop-shadow-md ${isActive ? 'text-white' : ''}`}>
+                        {pt.data.label}
+                      </p>
+                      <div 
+                        className={`w-2 h-2 rounded-full mx-auto transition-all duration-300 ${isActive ? 'w-8 h-1.5 rounded-lg brightness-150' : ''}`} 
+                        style={{ backgroundColor: pt.data.colorHex }}
+                      ></div>
+                   </div>
+                </div>
+
+              </div>
+             );
+          })}
+        </div>
+
+      </div>
+
+    </div>
+  );
+};
+
+export default SalesPipeline;
