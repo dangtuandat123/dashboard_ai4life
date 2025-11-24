@@ -114,6 +114,8 @@ function App() {
         setChatInput('');
     };
 
+    const stopScrollBubble = (e) => e.stopPropagation();
+
     const scrollToSection = (ref, alignBottom = false, forceCenter = false) => {
         if (!ref?.current) return;
         const rect = ref.current.getBoundingClientRect();
@@ -380,7 +382,7 @@ function App() {
                 </div>
                 <div className="assistant-panel__body">
                     <div className="assistant-chat">
-                        <div className="assistant-messages">
+                        <div className="assistant-messages" onWheel={stopScrollBubble}>
                             {chatMessages.map((msg) => (
                                 <div key={msg.id} className={`chat-row ${msg.from === 'bot' ? 'chat-row--bot' : 'chat-row--user'}`}>
                                     <div className="chat-avatar">
