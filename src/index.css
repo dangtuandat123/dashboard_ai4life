@@ -6,6 +6,7 @@
 
 :root {
   color-scheme: dark;
+  --assistant-width: clamp(320px, 24vw, 420px);
   --bg: #05060d;
   --bg-accent: radial-gradient(circle at 15% 20%, rgba(34, 211, 238, 0.08), transparent 30%),
     radial-gradient(circle at 80% 15%, rgba(168, 85, 247, 0.08), transparent 28%),
@@ -37,6 +38,7 @@
 
 :root[data-theme='light'] {
   color-scheme: light;
+  --assistant-width: clamp(320px, 26vw, 420px);
   --bg: #f6f8fb;
   --bg-accent: radial-gradient(circle at 20% 15%, rgba(14, 165, 233, 0.15), transparent 35%),
     radial-gradient(circle at 80% 10%, rgba(99, 102, 241, 0.12), transparent 30%),
@@ -435,6 +437,251 @@ body {
 .nav-chip,
 .scroll-top {
   transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, background-position 0.25s ease;
+}
+
+.assistant-toggle {
+  position: fixed;
+  right: 12px;
+  bottom: 70px;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--glow-1), var(--glow-2));
+  color: #0b1224;
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.25);
+  transition: transform 0.25s ease, box-shadow 0.3s ease, filter 0.25s ease;
+  z-index: 40;
+  overflow: hidden;
+}
+
+.assistant-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  filter: saturate(1.1);
+}
+
+.assistant-toggle--active {
+  box-shadow: 0 0 0 6px rgba(34, 211, 238, 0.25);
+}
+
+.assistant-toggle__glow {
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.6), transparent 55%);
+  opacity: 0.3;
+  animation: pulse 2.6s ease-in-out infinite;
+}
+
+.assistant-panel {
+  position: fixed;
+  top: 14px;
+  right: -120%;
+  width: var(--assistant-width);
+  height: calc(100vh - 28px);
+  border-radius: 18px;
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(14px);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: right 0.35s ease, opacity 0.35s ease;
+  opacity: 0;
+  z-index: 35;
+  overflow: hidden;
+}
+
+.assistant-panel--open {
+  right: 14px;
+  opacity: 1;
+}
+
+.assistant-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.assistant-kicker {
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.assistant-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.assistant-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.assistant-close:hover {
+  transform: rotate(-12deg);
+  border-color: var(--border-strong);
+}
+
+.assistant-panel__body {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.assistant-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.14);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.assistant-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.assistant-list {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--text-strong);
+  display: grid;
+  gap: 4px;
+}
+
+.assistant-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.assistant-chip {
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel-soft);
+  color: var(--text-strong);
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.assistant-chip:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.assistant-input {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.assistant-input input {
+  flex: 1;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel-soft);
+  padding: 10px 12px;
+  color: var(--text-strong);
+  outline: none;
+}
+
+.assistant-send {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: linear-gradient(120deg, var(--glow-1), #22c55e);
+  color: #041019;
+  font-weight: 700;
+  box-shadow: 0 12px 25px rgba(34, 197, 94, 0.18);
+  transition: transform 0.2s ease;
+}
+
+.assistant-send:hover {
+  transform: translateY(-1px);
+}
+
+.dashboard-container.assistant-open .scroll-top {
+  right: calc(var(--assistant-width) + 28px);
+}
+
+.dashboard-container.assistant-open .assistant-toggle {
+  right: calc(var(--assistant-width) + 20px);
+}
+
+.content-wrapper.content-with-assistant {
+  margin-right: calc(var(--assistant-width) + 32px);
+  transition: margin 0.35s ease;
+}
+
+.dashboard-container.assistant-open .quick-nav {
+  right: auto;
+  left: 12px;
+  z-index: 50;
+}
+
+@media (max-width: 1024px) {
+  .assistant-panel {
+    width: min(420px, 68vw);
+  }
+  .dashboard-container.assistant-open .scroll-top {
+    right: calc(min(420px, 68vw) + 20px);
+  }
+  .dashboard-container.assistant-open .assistant-toggle {
+    right: calc(min(420px, 68vw) + 12px);
+  }
+  .content-wrapper.content-with-assistant {
+    margin-right: calc(min(420px, 68vw) + 24px);
+  }
+  .dashboard-container.assistant-open .quick-nav {
+    right: auto;
+    left: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .assistant-panel {
+    right: 8px;
+    top: 8px;
+    width: min(360px, 92vw);
+    height: calc(100vh - 16px);
+    border-radius: 16px;
+  }
+  .dashboard-container.assistant-open .scroll-top,
+  .dashboard-container.assistant-open .assistant-toggle,
+  .dashboard-container.assistant-open .quick-nav {
+    right: auto;
+    left: 12px;
+  }
+  .content-wrapper.content-with-assistant {
+    margin-right: calc(min(360px, 92vw) + 20px);
+  }
 }
 
 @keyframes gradientShift {

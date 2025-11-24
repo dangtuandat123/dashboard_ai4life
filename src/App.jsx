@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowUp, Moon, Sparkles, Sun } from 'lucide-react';
+import { ArrowUp, Bot, Moon, Sparkles, Sun, X } from 'lucide-react';
 import { useDashboardData } from './data/mockData.jsx';
 import PYPPerformance from './components/PYPPerformance';
 import SalesPipeline from './components/SalesPipeline';
@@ -23,6 +23,8 @@ function App() {
     });
     const [activeSection, setActiveSection] = useState('perf');
     const [showScrollTop, setShowScrollTop] = useState(false);
+    const [assistantOpen, setAssistantOpen] = useState(false);
+    const [chartRerender, setChartRerender] = useState(0);
     const isDark = theme === 'dark';
     const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
 
@@ -60,6 +62,18 @@ function App() {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('bb-theme', theme);
     }, [theme]);
+
+    // Force charts to recalc width when assistant panel toggles
+    useEffect(() => {
+        // Nudge responsive charts (Treemap) to recalc when layout shrinks
+        const tick = () => window.dispatchEvent(new Event('resize'));
+        const timer = setTimeout(() => {
+            setChartRerender((k) => k + 1);
+            tick();
+            setTimeout(tick, 120);
+        }, 30);
+        return () => clearTimeout(timer);
+    }, [assistantOpen]);
 
     const scrollToSection = (ref, alignBottom = false, forceCenter = false) => {
         if (!ref?.current) return;
@@ -103,9 +117,9 @@ function App() {
     }, []);
 
     return (
-        <div className="dashboard-container">
+        <div className={`dashboard-container ${assistantOpen ? 'assistant-open' : ''}`}>
             {/* Side quick-nav */}
-            <div className="fixed right-3 lg:right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30">
+            <div className="fixed right-3 lg:right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30 quick-nav">
                 {[
                     { key: 'perf', label: 'Hiệu suất', ref: perfRef, alignBottom: false, forceCenter: false },
                     { key: 'product', label: 'Sản phẩm', ref: productRef, alignBottom: false, forceCenter: true },
@@ -122,7 +136,7 @@ function App() {
                     </button>
                 ))}
             </div>
-            <div className="relative max-w-6xl xl:max-w-7xl mx-auto px-4 lg:px-6 py-6 lg:py-8">
+            <div className={`content-wrapper ${assistantOpen ? 'content-with-assistant' : ''} relative max-w-6xl xl:max-w-7xl mx-auto px-4 lg:px-6 py-6 lg:py-8`}>
                 <div className="absolute inset-0 pointer-events-none">
                     <div className="aurora-blur" />
                     <div className="grid-overlay" />
@@ -254,7 +268,7 @@ function App() {
                             </div>
                             <div className="col-span-12 xl:col-span-4 min-w-0 grid grid-rows-2 gap-3 auto-rows-[minmax(180px,auto)]">
                                 <div className="min-h-[200px]">
-                                    <SoLuongBan />
+                                    <SoLuongBan key={`so-luong-${chartRerender}`} />
                                 </div>
                                 <div className="min-h-[180px]">
                                     <KenhBanHang />
@@ -301,6 +315,55 @@ function App() {
                     <ArrowUp className="w-4 h-4" />
                 </button>
             )}
+
+            {!assistantOpen && (
+                <button
+                    className="assistant-toggle"
+                    onClick={() => setAssistantOpen(true)}
+                    aria-label="Mở trợ lý AI"
+                    aria-pressed={assistantOpen}
+                >
+                    <span className="assistant-toggle__glow" />
+                    <Bot className="w-4 h-4 relative" />
+                </button>
+            )}
+
+            <aside className={`assistant-panel ${assistantOpen ? 'assistant-panel--open' : ''}`} aria-hidden={!assistantOpen}>
+                <div className="assistant-panel__header">
+                    <div>
+                        <p className="assistant-kicker">Trợ lý AI</p>
+                        <h3 className="assistant-title">Tóm tắt & gợi ý hành động</h3>
+                    </div>
+                    <button className="assistant-close" onClick={() => setAssistantOpen(false)} aria-label="Đóng trợ lý">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+                <div className="assistant-panel__body">
+                    <div className="assistant-card">
+                        <p className="assistant-label">Ưu tiên hôm nay</p>
+                        <ul className="assistant-list">
+                            <li>Đẩy mạnh giai đoạn {hottestStage.label} với {hottestStage.count} hồ sơ.</li>
+                            <li>Đạt {kpiCompletion}% KPI tháng {currentMonth.month} – tăng tốc pipeline.</li>
+                            <li>Chuẩn bị báo cáo nhanh cho sales lead.</li>
+                        </ul>
+                    </div>
+                    <div className="assistant-card">
+                        <p className="assistant-label">Lệnh nhanh</p>
+                        <div className="assistant-badges">
+                            {['Tóm tắt hiệu suất', 'Rủi ro pipeline', 'Đề xuất ưu tiên', 'Xuất báo cáo'].map((chip) => (
+                                <button key={chip} className="assistant-chip">{chip}</button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="assistant-card">
+                        <p className="assistant-label">Chat ngay</p>
+                        <div className="assistant-input">
+                            <input type="text" placeholder="Hỏi trợ lý về KPI, pipeline, nhân sự..." />
+                            <button className="assistant-send">Gửi</button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
         </div>
     );
 }
