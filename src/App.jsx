@@ -124,6 +124,8 @@ function App() {
         }
     }, [chatMessages.length, kpiCompletion, currentMonth.month, hottestStage.label, hottestStage.count]);
 
+    const stripChartStyle = (html = '') => html.replace(/<style[\s\S]*?<\/style>/gi, '');
+
     const parseWebhookPayload = (raw) => {
         let payload = raw;
         try {
@@ -144,7 +146,7 @@ function App() {
                     return { id: Date.now() + idx, from: 'bot', type: 'text', text: data.data || '' };
                 }
                 if (data.type === 'chart') {
-                    return { id: Date.now() + idx, from: 'bot', type: 'chart', html: data.data || '' };
+                    return { id: Date.now() + idx, from: 'bot', type: 'chart', html: stripChartStyle(data.data || '') };
                 }
                 if (data.type === 'table') {
                     return { id: Date.now() + idx, from: 'bot', type: 'table', columns: data.data?.columns || [], rows: data.data?.rows || [] };
@@ -446,40 +448,43 @@ function App() {
                 <div className="assistant-panel__body">
                     <div className="assistant-chat">
                         <div className="assistant-messages" onWheel={stopScrollBubble}>
-                            {chatMessages.map((msg) => (
-                                <div key={msg.id} className={`chat-row ${msg.from === 'bot' ? 'chat-row--bot' : 'chat-row--user'}`}>
-                                    <div className={`chat-bubble ${msg.from === 'bot' ? 'chat-bubble--bot' : 'chat-bubble--user'}`}>
-                                        {msg.type === 'text' && <div className="chat-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }} />}
-                                        {msg.type === 'chart' && (
-                                            <div className="chat-chart">
-                                                <iframe title={`chart-${msg.id}`} srcDoc={msg.html} sandbox="allow-scripts" />
-                                            </div>
-                                        )}
-                                        {msg.type === 'table' && (
-                                            <div className="chat-table">
-                                                <table>
-                                                    <thead>
-                                                        <tr>
-                                                            {msg.columns.map((col, idx) => (
-                                                                <th key={idx}>{col}</th>
-                                                            ))}
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {msg.rows.map((row, rIdx) => (
-                                                            <tr key={rIdx}>
-                                                                {row.map((cell, cIdx) => (
-                                                                    <td key={cIdx}>{cell}</td>
+                            {chatMessages.map((msg) => {
+                                const bubbleClass = `chat-bubble ${msg.from === 'bot' ? 'chat-bubble--bot' : 'chat-bubble--user'} ${msg.type !== 'text' ? 'chat-bubble--media' : ''}`;
+                                return (
+                                    <div key={msg.id} className={`chat-row ${msg.from === 'bot' ? 'chat-row--bot' : 'chat-row--user'}`}>
+                                        <div className={bubbleClass}>
+                                            {msg.type === 'text' && <div className="chat-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }} />}
+                                            {msg.type === 'chart' && (
+                                                <div className="chat-chart">
+                                                    <iframe title={`chart-${msg.id}`} srcDoc={msg.html} sandbox="allow-scripts" />
+                                                </div>
+                                            )}
+                                            {msg.type === 'table' && (
+                                                <div className="chat-table">
+                                                    <table>
+                                                        <thead>
+                                                            <tr>
+                                                                {msg.columns.map((col, idx) => (
+                                                                    <th key={idx}>{col}</th>
                                                                 ))}
                                                             </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        )}
+                                                        </thead>
+                                                        <tbody>
+                                                            {msg.rows.map((row, rIdx) => (
+                                                                <tr key={rIdx}>
+                                                                    {row.map((cell, cIdx) => (
+                                                                        <td key={cIdx}>{cell}</td>
+                                                                    ))}
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                             <div ref={chatEndRef} />
                         </div>
                         <div className="assistant-suggestions">
