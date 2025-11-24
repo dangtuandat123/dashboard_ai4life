@@ -632,9 +632,10 @@ body {
 .chat-table {
   width: 100%;
   overflow: hidden;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
+  border-radius: 10px;
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  box-shadow: 0 12px 28px rgba(34, 211, 238, 0.15);
   padding: 0;
 }
 
@@ -695,6 +696,12 @@ body {
   border-radius: 10px;
   width: 100%;
   max-width: 100%;
+}
+
+.chat-bubble--thinking {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .chat-bubble--bot {
@@ -773,7 +780,7 @@ body {
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: #fef9c3;
+  color: #0b1224;
   opacity: 0.95;
   padding: 4px 0;
 }
@@ -856,10 +863,12 @@ body {
 
 .assistant-chip--csv {
   background: linear-gradient(135deg, #fefefe, #e2e8f0);
-  color: #0b1224;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.18);
-  border-radius: 0;
+  color: #0b1224 !important;
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  box-shadow: 0 6px 14px rgba(34, 211, 238, 0.22);
+  border-radius: 6px;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .assistant-chip--suggest {

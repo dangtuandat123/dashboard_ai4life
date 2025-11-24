@@ -592,6 +592,18 @@ function App() {
                                     </div>
                                 );
                             })}
+                            {isSending && (
+                                <div className="chat-row chat-row--bot">
+                                    <div className="chat-bubble chat-bubble--bot chat-bubble--thinking">
+                                        <div className="ai-thinking">
+                                            <span className="spark" />
+                                            <span className="spark" />
+                                            <span className="spark" />
+                                            <span>BeeBox đang suy luận...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             <div ref={chatEndRef} />
                         </div>
                         <div className="assistant-suggestions">
