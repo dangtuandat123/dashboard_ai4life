@@ -27,14 +27,13 @@ function App() {
     const [chartRerender, setChartRerender] = useState(0);
     const [showGreeting, setShowGreeting] = useState(false);
     const [chatInput, setChatInput] = useState('');
-    const [chatMessages, setChatMessages] = useState([
-        {
-            id: 1,
-            from: 'bot',
-            type: 'text',
-            text: 'Chào bạn! Tôi là BeeBox AI, sẵn sàng hỗ trợ phân tích KPI, pipeline và báo cáo.'
-        }
-    ]);
+    const makeGreeting = () => ({
+        id: 'greeting',
+        from: 'bot',
+        type: 'text',
+        text: 'Chào bạn! Tôi là BeeBox AI, sẵn sàng hỗ trợ phân tích KPI, pipeline và báo cáo.'
+    });
+    const [chatMessages, setChatMessages] = useState([makeGreeting()]);
     const [isSending, setIsSending] = useState(false);
     const [sendTimer, setSendTimer] = useState(0);
     const [chartHeights, setChartHeights] = useState({});
@@ -653,6 +652,14 @@ function App() {
                 </div>
                 <div className="assistant-panel__body">
                     <div className="assistant-chat">
+                        <div className="assistant-chat__actions">
+                            <button
+                                className="assistant-chip assistant-chip--csv"
+                                onClick={() => setChatMessages([makeGreeting()])}
+                            >
+                                Xóa đoạn chat
+                            </button>
+                        </div>
                         <div className="assistant-messages" onWheel={stopScrollBubble}>
                             {chatMessages.map((msg) => {
                                 const bubbleClass = `chat-bubble ${msg.from === 'bot' ? 'chat-bubble--bot' : 'chat-bubble--user'} ${msg.type !== 'text' ? 'chat-bubble--media' : ''} ${msg.fromDashboard ? 'chat-bubble--dash' : ''}`;
