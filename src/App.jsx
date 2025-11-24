@@ -25,6 +25,7 @@ function App() {
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [assistantOpen, setAssistantOpen] = useState(false);
     const [chartRerender, setChartRerender] = useState(0);
+    const [showGreeting, setShowGreeting] = useState(false);
     const isDark = theme === 'dark';
     const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
 
@@ -62,6 +63,12 @@ function App() {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('bb-theme', theme);
     }, [theme]);
+
+    useEffect(() => {
+        setShowGreeting(true);
+        const timer = setTimeout(() => setShowGreeting(false), 60000);
+        return () => clearTimeout(timer);
+    }, []);
 
     // Force charts to recalc width when assistant panel toggles
     useEffect(() => {
@@ -325,6 +332,7 @@ function App() {
                 >
                     <span className="assistant-toggle__glow" />
                     <Bot className="w-4 h-4 relative" />
+                    {showGreeting && <span className="assistant-bubble">Chào bạn, tôi là trợ lý AI phân tích dữ liệu BeeBox 👋</span>}
                 </button>
             )}
 
