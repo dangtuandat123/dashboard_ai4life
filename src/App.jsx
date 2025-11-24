@@ -412,7 +412,9 @@ function App() {
                                 onChange={(e) => setChatInput(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                             />
-                            <button className="assistant-send" onClick={handleSendMessage}>Gửi</button>
+                            <button className="assistant-send" onClick={handleSendMessage} aria-label="Gửi">
+                                ➤
+                            </button>
                         </div>
                     </div>
                 </div>

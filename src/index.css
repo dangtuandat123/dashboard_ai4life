@@ -729,13 +729,13 @@ body {
 }
 
 .assistant-send {
-  padding: 10px 14px;
+  padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid transparent;
-  background: linear-gradient(120deg, var(--glow-1), #22c55e);
-  color: #041019;
-  font-weight: 700;
-  box-shadow: 0 12px 25px rgba(34, 197, 94, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.24), rgba(168, 85, 247, 0.24));
+  color: #0b1224;
+  font-weight: 800;
+  box-shadow: 0 12px 25px rgba(34, 197, 94, 0.22);
   transition: transform 0.2s ease;
 }
 
