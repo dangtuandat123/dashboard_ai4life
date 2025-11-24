@@ -745,7 +745,8 @@ body {
 }
 
 .dashboard-container.assistant-open .scroll-top {
-  right: calc(var(--assistant-width) + 4px);
+  right: calc(var(--assistant-width) + 16px);
+  bottom: 20px;
 }
 
 .dashboard-container.assistant-open .assistant-toggle {
@@ -771,7 +772,8 @@ body {
     width: min(var(--assistant-width), 420px);
   }
   .dashboard-container.assistant-open .scroll-top {
-    right: calc(min(var(--assistant-width), 420px) + 4px);
+    right: calc(min(var(--assistant-width), 420px) + 12px);
+    bottom: 20px;
   }
   .dashboard-container.assistant-open .assistant-toggle {
     right: calc(min(var(--assistant-width), 420px) + 4px);
@@ -801,7 +803,7 @@ body {
   .dashboard-container.assistant-open .quick-nav {
     right: auto;
     left: 12px;
-    bottom: 16px;
+    bottom: 20px;
     top: auto;
     transform: none;
   }
