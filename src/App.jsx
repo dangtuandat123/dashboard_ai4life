@@ -269,10 +269,13 @@ function App() {
         setChatInput('');
         setIsSending(true);
         try {
-            const resp = await fetch('https://chatgpt.id.vn/webhook/bb17371c-6a34-421e-b659-75aa42041122', {
+            const endpoint = chatMode === 'suy_luan'
+                ? 'https://chatgpt.id.vn/webhook/70ecee2a-c278-461f-a898-52ff907b4fb2'
+                : 'https://chatgpt.id.vn/webhook/bb17371c-6a34-421e-b659-75aa42041122';
+            const resp = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text, mode: chatMode })
+                body: JSON.stringify({ message: text })
             });
             const raw = await resp.text();
             const mapped = parseWebhookPayload(raw);
