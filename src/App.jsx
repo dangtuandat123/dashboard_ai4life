@@ -226,6 +226,21 @@ function App() {
         poll();
     };
 
+    const downloadTableCsv = (columns = [], rows = []) => {
+        const header = columns.join(',');
+        const body = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const csv = [header, body].filter(Boolean).join('\n');
+        const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `beebox-table-${Date.now()}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     const stopScrollBubble = (e) => e.stopPropagation();
 
     const scrollToSection = (ref, alignBottom = false, forceCenter = false) => {
@@ -517,21 +532,29 @@ function App() {
                                                     <table>
                                                         <thead>
                                                             <tr>
-                                                                {msg.columns.map((col, idx) => (
+                                                            {msg.columns.map((col, idx) => (
                                                                     <th key={idx}>{col}</th>
                                                                 ))}
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {msg.rows.map((row, rIdx) => (
+                                                            {msg.rows.slice(0, 8).map((row, rIdx) => (
                                                                 <tr key={rIdx}>
                                                                     {row.map((cell, cIdx) => (
                                                                         <td key={cIdx}>{cell}</td>
                                                                     ))}
                                                                 </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                    <div className="chat-actions">
+                                                        <button
+                                                            className="assistant-chip assistant-chip--csv"
+                                                            onClick={() => downloadTableCsv(msg.columns, msg.rows)}
+                                                        >
+                                                            Tải CSV
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
