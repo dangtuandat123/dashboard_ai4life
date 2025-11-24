@@ -6,7 +6,7 @@
 
 :root {
   color-scheme: dark;
-  --assistant-width: clamp(320px, 24vw, 420px);
+  --assistant-width: clamp(300px, 30vw, 420px);
   --bg: #05060d;
   --bg-accent: radial-gradient(circle at 15% 20%, rgba(34, 211, 238, 0.08), transparent 30%),
     radial-gradient(circle at 80% 15%, rgba(168, 85, 247, 0.08), transparent 28%),
@@ -38,7 +38,7 @@
 
 :root[data-theme='light'] {
   color-scheme: light;
-  --assistant-width: clamp(320px, 26vw, 420px);
+  --assistant-width: clamp(300px, 30vw, 420px);
   --bg: #f6f8fb;
   --bg-accent: radial-gradient(circle at 20% 15%, rgba(14, 165, 233, 0.15), transparent 35%),
     radial-gradient(circle at 80% 10%, rgba(99, 102, 241, 0.12), transparent 30%),
@@ -509,11 +509,15 @@ body {
 .assistant-panel {
   position: fixed;
   top: 14px;
-  right: -120%;
+  right: 14px;
   width: var(--assistant-width);
   height: calc(100vh - 28px);
   border-radius: 12px;
-  background: var(--panel-strong);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.28), transparent 45%),
+    radial-gradient(circle at 80% 10%, rgba(236, 72, 153, 0.22), transparent 42%),
+    radial-gradient(circle at 60% 80%, rgba(99, 102, 241, 0.22), transparent 40%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08));
   border: 1px solid var(--border);
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(14px);
@@ -521,14 +525,16 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: right 0.35s ease, opacity 0.35s ease;
+  transition: transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.35s ease;
+  transform: translateX(110%);
   opacity: 0;
   z-index: 35;
   overflow: hidden;
+  will-change: transform, opacity;
 }
 
 .assistant-panel--open {
-  right: 14px;
+  transform: translateX(0);
   opacity: 1;
 }
 
@@ -680,16 +686,16 @@ body {
 
 @media (max-width: 1024px) {
   .assistant-panel {
-    width: min(420px, 68vw);
+    width: min(var(--assistant-width), 420px);
   }
   .dashboard-container.assistant-open .scroll-top {
-    right: calc(min(420px, 68vw) + 4px);
+    right: calc(min(var(--assistant-width), 420px) + 4px);
   }
   .dashboard-container.assistant-open .assistant-toggle {
-    right: calc(min(420px, 68vw) + 4px);
+    right: calc(min(var(--assistant-width), 420px) + 4px);
   }
   .content-wrapper.content-with-assistant {
-    margin-right: calc(min(420px, 68vw) + 4px);
+    margin-right: calc(min(var(--assistant-width), 420px) + 4px);
   }
   .dashboard-container.assistant-open .quick-nav {
     right: auto;
