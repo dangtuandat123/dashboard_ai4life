@@ -715,6 +715,44 @@ body {
   gap: 8px;
 }
 
+.suggest-loading {
+  font-size: 11px;
+  color: #e2e8f0;
+  opacity: 0.95;
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.suggest-loading .bulb {
+  animation: floatUp 1.8s ease-in-out infinite;
+}
+
+.dot-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #22d3ee;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.dot-pulse:nth-child(3) {
+  animation-delay: 0.12s;
+}
+
+.dot-pulse:nth-child(4) {
+  animation-delay: 0.24s;
+}
+
+.glow-input {
+  border: 1px solid rgba(34, 211, 238, 0.7) !important;
+  background: linear-gradient(120deg, rgba(34, 211, 238, 0.18), rgba(168, 85, 247, 0.18));
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+  box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.4), 0 12px 24px rgba(34, 211, 238, 0.2);
+}
+
 .chat-actions {
   display: flex;
   justify-content: flex-end;
@@ -771,6 +809,13 @@ body {
   color: #0f172a;
   border: 1px solid rgba(15, 23, 42, 0.12);
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.18);
+}
+
+.assistant-chip--suggest {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.14), rgba(168, 85, 247, 0.14));
+  color: #0f172a;
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  box-shadow: 0 4px 10px rgba(34, 211, 238, 0.25);
 }
 
 .assistant-chip:hover {

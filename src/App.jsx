@@ -30,6 +30,8 @@ function App() {
     const [chatMessages, setChatMessages] = useState([]);
     const [isSending, setIsSending] = useState(false);
     const [chartHeights, setChartHeights] = useState({});
+    const [autoSuggestions, setAutoSuggestions] = useState([]);
+    const [suggestLoading, setSuggestLoading] = useState(false);
     const chatEndRef = useRef(null);
     const isDark = theme === 'dark';
     const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -74,6 +76,38 @@ function App() {
         const timer = setTimeout(() => setShowGreeting(false), 60000);
         return () => clearTimeout(timer);
     }, []);
+
+    useEffect(() => {
+        const trimmed = chatInput.trim();
+        if (!trimmed) {
+            setAutoSuggestions([]);
+            setSuggestLoading(false);
+            return;
+        }
+        const controller = new AbortController();
+        setSuggestLoading(true);
+        const timer = setTimeout(async () => {
+            try {
+                const resp = await fetch('https://chatgpt.id.vn/webhook/agent-suggest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: trimmed }),
+                    signal: controller.signal
+                });
+                const data = await resp.json();
+                const suggestions = data?.output?.suggestions || [];
+                setAutoSuggestions(suggestions.slice(0, 6));
+            } catch {
+                setAutoSuggestions([]);
+            } finally {
+                setSuggestLoading(false);
+            }
+        }, 2000);
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+    }, [chatInput]);
 
     const renderMarkdown = (text) => {
         if (!text) return '';
@@ -564,15 +598,6 @@ function App() {
                             <div ref={chatEndRef} />
                         </div>
                         <div className="assistant-suggestions">
-                            {['Tóm tắt KPI', 'Rủi ro pipeline', 'Đề xuất ưu tiên', 'Xuất báo cáo'].map((chip) => (
-                                <button
-                                    key={chip}
-                                    className="assistant-chip"
-                                    onClick={() => setChatInput(chip)}
-                                >
-                                    {chip}
-                                </button>
-                            ))}
                         </div>
                         <div className="assistant-input">
                             <input
@@ -582,10 +607,31 @@ function App() {
                                 onChange={(e) => setChatInput(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                                 disabled={isSending}
+                                className={suggestLoading ? 'glow-input' : ''}
                             />
                             <button className="assistant-send" onClick={handleSendMessage} aria-label="Gửi" disabled={isSending}>
                                 ➤
                             </button>
+                        </div>
+                        <div className="assistant-suggestions">
+                            {suggestLoading && (
+                                <div className="suggest-loading">
+                                    <span className="bulb">💡</span>
+                                    <span className="dot-pulse" />
+                                    <span className="dot-pulse" />
+                                    <span className="dot-pulse" />
+                                    <span className="ml-1">Đang gợi ý...</span>
+                                </div>
+                            )}
+                            {!suggestLoading && autoSuggestions.map((suggestion, idx) => (
+                                <button
+                                    key={idx}
+                                    className="assistant-chip assistant-chip--suggest"
+                                    onClick={() => setChatInput(suggestion)}
+                                >
+                                    {suggestion}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
