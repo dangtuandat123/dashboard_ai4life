@@ -8,6 +8,7 @@ import HieuSuatTaiChinh from './components/HieuSuatTaiChinh';
 import KenhBanHang from './components/KenhBanHang';
 import DoanhThuSanPham from './components/DoanhThuSanPham';
 import SoLuongBan from './components/SoLuongBan';
+import LoiNhuanRong from './components/LoiNhuanRong';
 
 function App() {
     const [activeSection, setActiveSection] = useState('perf');
@@ -239,8 +240,11 @@ function App() {
                             <div className="col-span-12 md:col-span-6 xl:col-span-6 min-w-0">
                                 <TopPerformersHeatmap />
                             </div>
-                            <div className="col-span-12 min-w-0">
+                            <div className="col-span-12 lg:col-span-6 min-w-0">
                                 <HieuSuatTaiChinh />
+                            </div>
+                            <div className="col-span-12 lg:col-span-6 min-w-0">
+                                <LoiNhuanRong />
                             </div>
                         </div>
                     </div>

@@ -37,13 +37,13 @@ const HieuSuatTaiChinh = () => {
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
                         <XAxis
                             dataKey="month"
-                            tick={{ fill: '#e2e8f0', fontSize: 11, fontWeight: 500 }}
+                            tick={{ fill: '#e2e8f0', fontSize: 12, fontWeight: 600 }}
                             axisLine={false}
                             tickLine={false}
                             dy={10}
                         />
                         <YAxis
-                            tick={{ fill: '#e2e8f0', fontSize: 11, fontWeight: 500 }}
+                            tick={{ fill: '#e2e8f0', fontSize: 12, fontWeight: 600 }}
                             axisLine={false}
                             tickLine={false}
                             tickFormatter={(value) => formatVietnameseNumber(value)}
@@ -55,7 +55,7 @@ const HieuSuatTaiChinh = () => {
                                 backgroundColor: 'rgba(15, 23, 42, 0.95)',
                                 border: '1px solid rgba(255,255,255,0.2)',
                                 borderRadius: '8px',
-                                fontSize: '12px',
+                                fontSize: '13px',
                                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)'
                             }}
                             itemStyle={{ padding: '2px 0' }}
@@ -63,19 +63,19 @@ const HieuSuatTaiChinh = () => {
                         <Legend
                             wrapperStyle={{ paddingTop: '10px' }}
                             iconType="circle"
-                            formatter={(value) => <span className="text-slate-300 text-xs font-medium ml-1">{value}</span>}
+                            formatter={(value) => <span className="text-slate-300 text-sm font-medium ml-1">{value}</span>}
                         />
                         <Area
                             type="monotone"
                             dataKey="revenue"
                             stroke="#34d399"
-                            strokeWidth={3}
+                            strokeWidth={4}
                             fill="url(#colorRevenue)"
                             name="Doanh thu"
-                            dot={{ r: 4, strokeWidth: 2, fill: '#0f172a', stroke: '#34d399' }}
-                            activeDot={{ r: 6, strokeWidth: 0, fill: '#fff' }}
+                            dot={{ r: 5, strokeWidth: 2, fill: '#0f172a', stroke: '#34d399' }}
+                            activeDot={{ r: 7, strokeWidth: 0, fill: '#fff' }}
                             label={({ x, y, value }) => (
-                                <text x={x} y={y} dy={-10} fill="#34d399" fontSize={10} textAnchor="middle" fontWeight="bold">
+                                <text x={x} y={y} dy={-12} fill="#34d399" fontSize={12} textAnchor="middle" fontWeight="bold">
                                     {formatVietnameseNumber(value)}
                                 </text>
                             )}
@@ -84,13 +84,13 @@ const HieuSuatTaiChinh = () => {
                             type="monotone"
                             dataKey="cost"
                             stroke="#f87171"
-                            strokeWidth={3}
+                            strokeWidth={4}
                             fill="url(#colorCost)"
                             name="Chi phí"
-                            dot={{ r: 4, strokeWidth: 2, fill: '#0f172a', stroke: '#f87171' }}
-                            activeDot={{ r: 6, strokeWidth: 0, fill: '#fff' }}
+                            dot={{ r: 5, strokeWidth: 2, fill: '#0f172a', stroke: '#f87171' }}
+                            activeDot={{ r: 7, strokeWidth: 0, fill: '#fff' }}
                             label={({ x, y, value }) => (
-                                <text x={x} y={y} dy={15} fill="#f87171" fontSize={10} textAnchor="middle" fontWeight="bold">
+                                <text x={x} y={y} dy={18} fill="#f87171" fontSize={12} textAnchor="middle" fontWeight="bold">
                                     {formatVietnameseNumber(value)}
                                 </text>
                             )}

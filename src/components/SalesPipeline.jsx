@@ -10,35 +10,51 @@ const SalesPipeline = () => {
     const total = pipelineStages.reduce((sum, d) => sum + d.count, 0);
     const issued = pipelineStages[pipelineStages.length - 1]?.count || 0;
     const conversion = total ? Math.round((issued / total) * 100) : 0;
-    const minHeight = 110;
-    const maxHeight = 260;
+
+    // SVG Configuration
+    const minHeight = 100;
+    const maxHeight = 320;
     const svgWidth = 1200;
-    const svgHeight = 500;
+    const svgHeight = 450;
     const centerY = svgHeight / 2;
-    const paddingX = 120;
+    const paddingX = 150;
     const usableWidth = svgWidth - paddingX * 2;
     const segmentWidth = pipelineStages.length > 1 ? usableWidth / (pipelineStages.length - 1) : usableWidth;
 
+    // Calculate points for the pipeline
     const points = useMemo(
         () =>
             pipelineStages.map((item, index) => {
                 const height = minHeight + (item.count / maxCount) * (maxHeight - minHeight);
                 const x = paddingX + index * segmentWidth;
+
+                // Assign specific neon colors based on stage index
+                const colors = [
+                    '#3b82f6', // Blue
+                    '#8b5cf6', // Purple
+                    '#ec4899', // Pink
+                    '#f59e0b', // Amber
+                    '#10b981'  // Emerald
+                ];
+                const color = colors[index % colors.length];
+
                 return {
                     x,
                     yTop: centerY - height / 2,
                     yBottom: centerY + height / 2,
-                    data: item,
+                    data: { ...item, color },
                     height
                 };
             }),
-        [maxCount]
+        [maxCount, pipelineStages]
     );
 
+    // Generate SVG Path
     const pathD = useMemo(() => {
         if (!points.length) return '';
         let path = `M ${points[0].x} ${points[0].yTop}`;
 
+        // Top curve
         for (let i = 0; i < points.length - 1; i++) {
             const p1 = points[i];
             const p2 = points[i + 1];
@@ -47,10 +63,12 @@ const SalesPipeline = () => {
             path += ` C ${cp1x} ${p1.yTop}, ${cp2x} ${p2.yTop}, ${p2.x} ${p2.yTop}`;
         }
 
+        // Right cap
         const lastPt = points[points.length - 1];
         const lastRadius = lastPt.height / 2;
         path += ` A ${lastRadius} ${lastRadius} 0 0 1 ${lastPt.x} ${lastPt.yBottom}`;
 
+        // Bottom curve (reversed)
         const reversed = [...points].reverse();
         for (let i = 0; i < reversed.length - 1; i++) {
             const p1 = reversed[i];
@@ -60,6 +78,7 @@ const SalesPipeline = () => {
             path += ` C ${cp1x} ${p1.yBottom}, ${cp2x} ${p2.yBottom}, ${p2.x} ${p2.yBottom}`;
         }
 
+        // Left cap
         const firstPt = points[0];
         const firstRadius = firstPt.height / 2;
         path += ` A ${firstRadius} ${firstRadius} 0 0 1 ${firstPt.x} ${firstPt.yTop}`;
@@ -67,46 +86,52 @@ const SalesPipeline = () => {
     }, [points]);
 
     return (
-        <div className="glass rounded-xl p-3 h-full flex flex-col border border-white/10 backdrop-blur-md">
-            <div className="mb-3 flex items-center justify-between gap-2 flex-wrap">
+        <div className="glass rounded-xl p-5 h-full flex flex-col border border-white/10 backdrop-blur-md relative overflow-hidden">
+            {/* Header */}
+            <div className="mb-4 flex items-center justify-between gap-2 relative z-10">
                 <div>
-                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Pipeline</p>
-                    <h3 className="text-sm font-semibold text-white">Sales Pipeline</h3>
-                    <p className="text-[10px] text-slate-400">Luồng pipeline theo giai đoạn</p>
+                    <p className="text-xs text-emerald-400 uppercase tracking-[0.15em] font-bold">Pipeline</p>
+                    <h3 className="text-lg font-bold text-white mt-1">Sales Pipeline</h3>
                 </div>
-                <div className="flex items-center gap-2 text-xs">
-                    <div className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-white">
-                        Tổng: <span className="font-semibold">{total}</span> lead
+                <div className="flex items-center gap-3 text-xs">
+                    <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300">
+                        Total: <span className="text-white font-bold text-sm">{total}</span>
                     </div>
-                    <div className="px-2 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-200">
-                        Chốt/đầu vào: <span className="font-semibold">{conversion}%</span>
+                    <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                        Conv: <span className="font-bold text-sm">{conversion}%</span>
                     </div>
                 </div>
             </div>
 
-            <div className="relative flex-1 min-h-[240px] w-full">
+            {/* Visualization Area */}
+            <div className="relative flex-1 w-full min-h-0 flex items-center justify-center py-4">
+
+                {/* Background Grid */}
                 <div
-                    className="absolute inset-0 pointer-events-none opacity-20"
+                    className="absolute inset-0 opacity-10 pointer-events-none"
                     style={{
-                        backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)',
-                        backgroundSize: '24px 24px'
+                        backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+                        backgroundSize: '40px 40px'
                     }}
                 />
 
                 <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full drop-shadow-2xl" preserveAspectRatio="xMidYMid meet">
                     <defs>
+                        {/* Main Gradient for the Pipeline Body */}
                         <linearGradient id="pipelineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                             {points.map((pt, i) => (
                                 <stop
-                                    key={pt.data.id}
+                                    key={`stop-${i}`}
                                     offset={`${(i / (points.length - 1)) * 100}%`}
                                     stopColor={pt.data.color}
-                                    stopOpacity="0.5"
+                                    stopOpacity="0.6"
                                 />
                             ))}
                         </linearGradient>
+
+                        {/* Glow Filter */}
                         <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
-                            <feGaussianBlur stdDeviation="12" result="coloredBlur" />
+                            <feGaussianBlur stdDeviation="8" result="coloredBlur" />
                             <feMerge>
                                 <feMergeNode in="coloredBlur" />
                                 <feMergeNode in="SourceGraphic" />
@@ -114,25 +139,35 @@ const SalesPipeline = () => {
                         </filter>
                     </defs>
 
-                    <path d={pathD} fill="none" stroke="url(#pipelineGradient)" strokeWidth="8" filter="url(#neonGlow)" opacity="0.6" />
+                    {/* Outer Glow Layer */}
+                    <path
+                        d={pathD}
+                        fill="none"
+                        stroke="url(#pipelineGradient)"
+                        strokeWidth="4"
+                        filter="url(#neonGlow)"
+                        opacity="0.5"
+                    />
 
+                    {/* Main Pipeline Body */}
                     <path
                         d={pathD}
                         fill="url(#pipelineGradient)"
-                        stroke="white"
-                        strokeWidth="1.5"
-                        strokeOpacity="0.2"
+                        stroke="rgba(255,255,255,0.2)"
+                        strokeWidth="1"
                         className="transition-all duration-500"
+                        style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))' }}
                     />
 
+                    {/* Center Dashed Line */}
                     <path
                         d={`M ${points[0]?.x || 0} ${centerY} L ${points[points.length - 1]?.x || 0} ${centerY}`}
-                        stroke="white"
+                        stroke="rgba(255,255,255,0.3)"
                         strokeWidth="1"
-                        strokeDasharray="6,6"
-                        opacity="0.15"
+                        strokeDasharray="4,4"
                     />
 
+                    {/* Vertical Lines at Nodes */}
                     {points.map((pt) => (
                         <line
                             key={`line-${pt.data.id}`}
@@ -142,60 +177,64 @@ const SalesPipeline = () => {
                             y2={centerY + pt.height / 2}
                             stroke={pt.data.color}
                             strokeWidth="1"
-                            opacity="0.3"
+                            opacity="0.4"
+                            strokeDasharray="2,2"
                         />
                     ))}
                 </svg>
 
+                {/* Interactive Nodes Overlay */}
                 <div className="absolute inset-0">
                     {points.map((pt, index) => {
                         const isActive = activeIndex === index;
                         const isDimmed = activeIndex !== null && activeIndex !== index;
-                        const rate = index === 0 ? 100 : Math.round((pt.data.count / points[0].data.count) * 100);
+
                         return (
                             <div
                                 key={pt.data.id}
-                                className={`absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center transition-all duration-500 ease-out ${isDimmed ? 'opacity-30 blur-[1px] scale-95' : 'opacity-100 scale-100'
-                                    }`}
+                                className={`absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center transition-all duration-500 ${isDimmed ? 'opacity-30 blur-[1px]' : 'opacity-100'}`}
                                 style={{ left: `${(pt.x / svgWidth) * 100}%`, top: '50%' }}
                                 onMouseEnter={() => setActiveIndex(index)}
                                 onMouseLeave={() => setActiveIndex(null)}
-                                onClick={() => setActiveIndex(isActive ? null : index)}
                             >
-                                <div className="relative group cursor-pointer flex flex-col items-center">
+                                {/* The Node Circle */}
+                                <div className="relative group cursor-pointer">
+                                    {/* Pulse Ring */}
                                     <div
-                                        className={`absolute inset-0 rounded-full bg-white/30 blur-lg transform scale-150 transition-opacity duration-300 ${isActive ? 'opacity-100 animate-pulse' : 'opacity-0'
-                                            }`}
+                                        className={`absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 ${isActive ? 'opacity-100 animate-ping' : ''}`}
+                                        style={{ backgroundColor: pt.data.color }}
                                     />
 
+                                    {/* Main Circle */}
                                     <div
-                                        className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center backdrop-blur-xl border-2 shadow-2xl transition-all duration-300 ease-out ${isActive ? 'scale-125 border-white' : 'hover:scale-110 border-white/20'
-                                            }`}
+                                        className={`w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-md border-2 transition-all duration-300 ${isActive ? 'scale-125 border-white' : 'hover:scale-110 border-white/30'}`}
                                         style={{
-                                            backgroundColor: `${pt.data.color}20`,
+                                            backgroundColor: `${pt.data.color}33`,
                                             borderColor: isActive ? 'white' : `${pt.data.color}66`,
-                                            boxShadow: isActive ? `0 0 40px ${pt.data.color}80` : `0 10px 20px -5px black`
+                                            boxShadow: isActive ? `0 0 30px ${pt.data.color}` : `0 4px 15px rgba(0,0,0,0.3)`
                                         }}
                                     >
-                                        <span className="text-2xl md:text-3xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                                        <span className="text-xl font-bold text-white drop-shadow-md">
                                             {pt.data.count}
                                         </span>
                                     </div>
+                                </div>
 
-                                    <div className={`mt-4 text-center transition-all duration-300 w-32 ${isActive ? 'translate-y-1' : ''}`}>
-                                        <p
-                                            className={`text-xs md:text-sm font-bold uppercase tracking-widest text-slate-300 mb-1 drop-shadow-md ${isActive ? 'text-white' : ''
-                                                }`}
-                                        >
-                                            {pt.data.label}
-                                        </p>
-                                        <div className="text-[11px] text-slate-300">{rate}% so với đầu vào</div>
-                                        <div
-                                            className={`mt-1 w-2 h-2 rounded-full mx-auto transition-all duration-300 ${isActive ? 'w-8 h-1.5 rounded-lg brightness-150' : ''
-                                                }`}
-                                            style={{ backgroundColor: pt.data.color }}
-                                        />
-                                    </div>
+                                {/* Info Label (Below) */}
+                                <div
+                                    className={`absolute top-20 text-center transition-all duration-300 w-40 ${isActive ? 'translate-y-0 opacity-100' : 'translate-y-[-5px] opacity-80'}`}
+                                >
+                                    <p
+                                        className="text-xs font-bold uppercase tracking-widest mb-1"
+                                        style={{ color: isActive ? pt.data.color : '#cbd5e1' }}
+                                    >
+                                        {pt.data.label}
+                                    </p>
+                                    {isActive && (
+                                        <div className="text-[11px] text-white font-bold bg-slate-800/90 px-3 py-1 rounded-full inline-block backdrop-blur border border-white/10">
+                                            {Math.round((pt.data.count / points[0].data.count) * 100)}% retained
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         );
