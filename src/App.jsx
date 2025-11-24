@@ -529,9 +529,9 @@ function App() {
                                                                         <td key={cIdx}>{cell}</td>
                                                                     ))}
                                                                 </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
                                                 </div>
                                             )}
                                         </div>
@@ -567,6 +567,7 @@ function App() {
                     </div>
                 </div>
             </aside>
+
         </div>
     );
 }
