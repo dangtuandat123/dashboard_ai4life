@@ -619,6 +619,7 @@ body {
   border-radius: 8px;
   overflow: hidden;
   padding: 0;
+  position: relative;
 }
 
 .chat-chart iframe {
@@ -718,14 +719,14 @@ body {
 
 .assistant-suggestions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
   width: 100%;
   opacity: 0;
   transform: translateY(4px);
   max-height: 0;
   pointer-events: none;
-  transition: opacity 0.45s ease, transform 0.45s ease, max-height 0.45s ease;
+  transition: opacity 0.65s ease, transform 0.65s ease, max-height 0.65s ease;
 }
 
 .assistant-suggestions.is-visible {
@@ -798,6 +799,12 @@ body {
   box-shadow: 0 0 8px rgba(250, 204, 21, 0.55);
 }
 
+.ai-thinking .bulb {
+  font-size: 14px;
+  color: #facc15;
+  animation: floatUp 1.8s ease-in-out infinite;
+}
+
 .ai-thinking .spark:nth-child(2) { animation-delay: 0.1s; }
 .ai-thinking .spark:nth-child(3) { animation-delay: 0.2s; }
 .glow-input {
@@ -862,13 +869,19 @@ body {
 }
 
 .assistant-chip--csv {
-  background: linear-gradient(135deg, #fefefe, #e2e8f0);
+  background: linear-gradient(135deg, #ffffff, #e2e8f0);
   color: #0b1224 !important;
-  border: 1px solid rgba(34, 211, 238, 0.3);
-  box-shadow: 0 6px 14px rgba(34, 211, 238, 0.22);
-  border-radius: 6px;
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  box-shadow: 0 10px 22px rgba(34, 211, 238, 0.2);
+  border-radius: 8px;
   opacity: 1;
   transform: translateY(0);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  min-width: 104px;
+  gap: 6px;
 }
 
 .assistant-chip--suggest {
@@ -878,7 +891,17 @@ body {
   box-shadow: 0 4px 10px rgba(190, 242, 100, 0.25);
   border-radius: 8px;
   width: 100%;
+  display: block;
   text-align: left;
+  font-weight: 800;
+}
+
+.chat-actions .assistant-chip {
+  opacity: 1;
+  transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .assistant-chip:hover {
@@ -887,7 +910,7 @@ body {
 }
 
 .assistant-suggestions.is-visible .assistant-chip {
-  animation: suggestFade 0.4s ease forwards;
+  animation: suggestFade 0.6s ease forwards;
 }
 
 .assistant-suggestions.is-visible .assistant-chip:nth-child(1) { animation-delay: 0s; }
@@ -1094,4 +1117,79 @@ body {
 * {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+.chart-fullscreen-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  background: rgba(15, 23, 42, 0.6);
+  color: #e2e8f0;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.chart-fullscreen-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(34, 211, 238, 0.6);
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.chart-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 12px;
+}
+
+.chart-fullscreen-inner {
+  position: relative;
+  width: 70vw;
+  max-width: 1200px;
+  height: 80vh;
+  background: #0b1224;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.chart-fullscreen-inner iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.chart-fullscreen-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.chart-fullscreen-close:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.12);
 }

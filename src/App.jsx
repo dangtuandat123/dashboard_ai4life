@@ -39,6 +39,7 @@ function App() {
     const [chartHeights, setChartHeights] = useState({});
     const [autoSuggestions, setAutoSuggestions] = useState([]);
     const [suggestLoading, setSuggestLoading] = useState(false);
+    const [chartFullscreen, setChartFullscreen] = useState({ open: false, html: '' });
     const chatEndRef = useRef(null);
     const isDark = theme === 'dark';
     const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -255,6 +256,16 @@ function App() {
             }
         };
         poll();
+    };
+
+    const openChartFullscreen = (html) => {
+        setChartFullscreen({ open: true, html });
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeChartFullscreen = () => {
+        setChartFullscreen({ open: false, html: '' });
+        document.body.style.overflow = '';
     };
 
     const downloadTableCsv = (columns = [], rows = []) => {
@@ -556,6 +567,9 @@ function App() {
                                                         style={{ height: chartHeights[msg.id] ? `${chartHeights[msg.id]}px` : '280px' }}
                                                         onLoad={(e) => handleChartLoad(msg.id, e)}
                                                     />
+                                                    <button className="chart-fullscreen-btn" onClick={() => openChartFullscreen(msg.html)} aria-label="Mở toàn màn hình biểu đồ">
+                                                        ⤢
+                                                    </button>
                                                 </div>
                                             )}
                                             {msg.type === 'table' && (
@@ -563,7 +577,7 @@ function App() {
                                                     <table>
                                                         <thead>
                                                             <tr>
-                                                            {msg.columns.map((col, idx) => (
+                                                                {msg.columns.map((col, idx) => (
                                                                     <th key={idx}>{col}</th>
                                                                 ))}
                                                             </tr>
@@ -599,6 +613,7 @@ function App() {
                                             <span className="spark" />
                                             <span className="spark" />
                                             <span className="spark" />
+                                            <span className="bulb" aria-hidden="true">🧠</span>
                                             <span>BeeBox đang suy luận...</span>
                                         </div>
                                     </div>
@@ -606,7 +621,25 @@ function App() {
                             )}
                             <div ref={chatEndRef} />
                         </div>
-                        <div className="assistant-suggestions">
+                        <div className={`assistant-suggestions ${suggestLoading || autoSuggestions.length > 0 ? 'is-visible' : ''}`}>
+                            {suggestLoading && (
+                                <div className="ai-thinking">
+                                    <span className="spark" />
+                                    <span className="spark" />
+                                    <span className="spark" />
+                                    <span className="bulb" aria-hidden="true">💡</span>
+                                    <span>BeeBox đang gợi ý...</span>
+                                </div>
+                            )}
+                            {!suggestLoading && autoSuggestions.map((suggestion, idx) => (
+                                <button
+                                    key={idx}
+                                    className="assistant-chip assistant-chip--suggest"
+                                    onClick={() => setChatInput(suggestion)}
+                                >
+                                    {suggestion}
+                                </button>
+                            ))}
                         </div>
                         <div className="assistant-input">
                             <input
@@ -627,32 +660,24 @@ function App() {
                                 <span className="spark" />
                                 <span className="spark" />
                                 <span className="spark" />
+                                <span className="bulb" aria-hidden="true">🧠</span>
                                 <span>BeeBox đang suy luận...</span>
                             </div>
                         )}
-                        <div className={`assistant-suggestions ${suggestLoading || autoSuggestions.length > 0 ? 'is-visible' : ''}`}>
-                            {suggestLoading && (
-                                <div className="ai-thinking">
-                                    <span className="spark" />
-                                    <span className="spark" />
-                                    <span className="spark" />
-                                    <span>BeeBox đang gợi ý...</span>
-                                </div>
-                            )}
-                            {!suggestLoading && autoSuggestions.map((suggestion, idx) => (
-                                <button
-                                    key={idx}
-                                    className="assistant-chip assistant-chip--suggest"
-                                    onClick={() => setChatInput(suggestion)}
-                                >
-                                    {suggestion}
-                                </button>
-                            ))}
-                        </div>
                     </div>
                 </div>
             </aside>
 
+            {chartFullscreen.open && (
+                <div className="chart-fullscreen-overlay" onClick={closeChartFullscreen}>
+                    <div className="chart-fullscreen-inner" onClick={(e) => e.stopPropagation()}>
+                        <button className="chart-fullscreen-close" onClick={closeChartFullscreen} aria-label="Đóng">
+                            <X className="w-4 h-4" />
+                        </button>
+                        <iframe title="chart-fullscreen" srcDoc={chartFullscreen.html} sandbox="allow-scripts" />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
