@@ -6,6 +6,9 @@ import { formatVietnameseNumber } from '../utils/formatters';
 const ChienBinhSales = () => {
     const { topPerformersList: performersData } = useDashboardData();
     const topPerformersList = performersData.data || [];
+    const firePrompt = (title, text) => {
+        window.dispatchEvent(new CustomEvent('bb-insight', { detail: { title, text } }));
+    };
 
     const getRankStyle = (rank) => {
         switch (rank) {
@@ -64,6 +67,12 @@ const ChienBinhSales = () => {
                         <div
                             key={performer.rank}
                             className={`flex items-center gap-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all hover:scale-[1.01] cursor-pointer border backdrop-blur-md ${style.border} ${performer.rank === 1 ? 'bg-yellow-500/5' : ''}`}
+                            onClick={() =>
+                                firePrompt(
+                                    'Chiến binh dẫn đầu',
+                                    `${performer.name} (hạng #${performer.rank}): doanh thu ${formatVietnameseNumber(performer.revenue)}. Hãy so sánh với các hạng khác và gợi ý coaching/khen thưởng.`
+                                )
+                            }
                         >
                             <div className={`w-9 h-9 rounded-xl ${style.bg} flex items-center justify-center text-base font-bold text-white flex-shrink-0 shadow-lg ${style.shadow} relative`}>
                                 {performer.rank <= 3 && (

@@ -9,6 +9,7 @@ const TopPerformersHeatmap = () => {
         () => [...(heatmapData.data || [])].sort((a, b) => b.doanhThu - a.doanhThu).slice(0, 4),
         [heatmapData.data]
     );
+    const firePrompt = (title, text) => window.dispatchEvent(new CustomEvent('bb-insight', { detail: { title, text } }));
 
     const allValues = performers.flatMap((person) => [person.hoatDong, person.doanhThu]);
     const minValue = Math.min(...allValues);
@@ -69,12 +70,24 @@ const TopPerformersHeatmap = () => {
                             <div
                                 className="rounded-lg flex items-center justify-center text-xs font-bold text-white transition-all hover:scale-105 cursor-pointer h-full shadow-sm"
                                 style={{ backgroundColor: getColorIntensity(performer.hoatDong, 'hoatDong') }}
+                                onClick={() =>
+                                    firePrompt(
+                                        'Bản đồ nhiệt hiệu suất',
+                                        `${performer.name}: hoạt động ${formatValue(performer.hoatDong, 'hoatDong')}, doanh thu ${formatValue(performer.doanhThu, 'doanhThu')}`
+                                    )
+                                }
                             >
                                 {formatValue(performer.hoatDong, 'hoatDong')}
                             </div>
                             <div
                                 className="rounded-lg flex items-center justify-center text-xs font-bold text-white transition-all hover:scale-105 cursor-pointer h-full shadow-sm"
                                 style={{ backgroundColor: getColorIntensity(performer.doanhThu, 'doanhThu') }}
+                                onClick={() =>
+                                    firePrompt(
+                                        'Bản đồ nhiệt hiệu suất',
+                                        `${performer.name}: hoạt động ${formatValue(performer.hoatDong, 'hoatDong')}, doanh thu ${formatValue(performer.doanhThu, 'doanhThu')}`
+                                    )
+                                }
                             >
                                 {formatValue(performer.doanhThu, 'doanhThu')}
                             </div>

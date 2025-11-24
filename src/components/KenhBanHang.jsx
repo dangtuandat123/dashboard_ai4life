@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Share2 } from 'lucide-react';
 import { useDashboardData } from '../data/mockData.jsx';
+import { formatVietnameseNumber } from '../utils/formatters';
 
 const KenhBanHang = () => {
     const { salesChannels: channelsData } = useDashboardData();
@@ -9,6 +10,10 @@ const KenhBanHang = () => {
     const totalValue = useMemo(() => {
         return salesChannels.reduce((sum, item) => sum + (item.value || 0), 0);
     }, [salesChannels]);
+
+    const firePrompt = (title, text) => {
+        window.dispatchEvent(new CustomEvent('bb-insight', { detail: { title, text } }));
+    };
 
     return (
         <div className="glass rounded-xl p-3 h-full flex flex-col border border-white/10 backdrop-blur-md">
@@ -27,7 +32,16 @@ const KenhBanHang = () => {
                     const percentage = totalValue > 0 ? Math.round((channel.value / totalValue) * 100) : 0;
 
                     return (
-                        <div key={channel.channel} className="space-y-1.5 group">
+                        <div
+                            key={channel.channel}
+                            className="space-y-1.5 group cursor-pointer"
+                            onClick={() =>
+                                firePrompt(
+                                    'Kênh bán hàng',
+                                    `${channel.channel}: ${formatVietnameseNumber(channel.value)} (${percentage}%) trên tổng ${formatVietnameseNumber(totalValue)}. Hãy đánh giá hiệu quả kênh này và đề xuất tối ưu.`
+                                )
+                            }
+                        >
                             <div className="flex justify-between text-xs items-end">
                                 <span className="text-slate-300 font-medium group-hover:text-white transition-colors">
                                     {channel.channel}

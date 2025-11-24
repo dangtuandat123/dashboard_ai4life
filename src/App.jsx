@@ -553,7 +553,15 @@ function App() {
                                 <DoanhThuSanPham />
                             </div>
                             <div className="col-span-12 xl:col-span-4 min-w-0 grid grid-rows-2 gap-3 auto-rows-[minmax(180px,auto)]">
-                                <div className="min-h-[200px] chart-click">
+                                <div
+                                    className="min-h-[200px] chart-click"
+                                    onClick={() =>
+                                        triggerAssistantPrompt(
+                                            'Số lượng bán',
+                                            `Mình vừa xem treemap số lượng bán: mục top ${topQuantity?.name || topQuantity?.product || 'N/A'} đạt ${Number(topQuantity?.value || topQuantity?.quantity || topQuantity?.count || 0)} quyền lợi. Hãy phân tích ô mình bấm và phân bố toàn bộ.`
+                                        )
+                                    }
+                                >
                                     <SoLuongBan key={`so-luong-${chartRerender}`} />
                                 </div>
                                 <div className="min-h-[180px] chart-click">
@@ -581,10 +589,26 @@ function App() {
                             <div className="col-span-12 md:col-span-6 xl:col-span-6 min-w-0 chart-click">
                                 <TopPerformersHeatmap />
                             </div>
-                            <div className="col-span-12 lg:col-span-6 min-w-0 chart-click">
+                            <div
+                                className="col-span-12 lg:col-span-6 min-w-0 chart-click"
+                                onClick={() =>
+                                    triggerAssistantPrompt(
+                                        'Hiệu suất tài chính',
+                                        `Tháng mới nhất: revenue ${currencyText(latestRevenue)}, cost ${currencyText(latestCost)}. Hãy phân tích xu hướng revenue/cost và rủi ro.`
+                                    )
+                                }
+                            >
                                 <HieuSuatTaiChinh />
                             </div>
-                            <div className="col-span-12 lg:col-span-6 min-w-0 chart-click">
+                            <div
+                                className="col-span-12 lg:col-span-6 min-w-0 chart-click"
+                                onClick={() =>
+                                    triggerAssistantPrompt(
+                                        'Lợi nhuận ròng',
+                                        `Tháng mới nhất: revenue ${currencyText(latestRevenue)}, cost ${currencyText(latestCost)}. Hãy phân tích biên lợi nhuận và cách cải thiện.`
+                                    )
+                                }
+                            >
                                 <LoiNhuanRong />
                             </div>
                         </div>
