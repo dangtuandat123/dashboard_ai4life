@@ -26,6 +26,9 @@ function App() {
     const [assistantOpen, setAssistantOpen] = useState(false);
     const [chartRerender, setChartRerender] = useState(0);
     const [showGreeting, setShowGreeting] = useState(false);
+    const [chatInput, setChatInput] = useState('');
+    const [chatMessages, setChatMessages] = useState([]);
+    const chatEndRef = useRef(null);
     const isDark = theme === 'dark';
     const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
 
@@ -81,6 +84,35 @@ function App() {
         }, 30);
         return () => clearTimeout(timer);
     }, [assistantOpen]);
+
+    useEffect(() => {
+        if (assistantOpen && chatEndRef.current) {
+            chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [assistantOpen, chatMessages]);
+
+    useEffect(() => {
+        if (chatMessages.length === 0) {
+            setChatMessages([
+                { id: 1, from: 'bot', text: 'Xin chào, tôi là Gemini BeeBox! Tôi có thể giúp tóm tắt KPI và gợi ý ưu tiên.' },
+                { id: 2, from: 'user', text: 'Hãy cho tôi biết tình hình KPI tháng này.' },
+                { id: 3, from: 'bot', text: `Bạn đã đạt ${kpiCompletion}% KPI tháng ${currentMonth.month}. Nên đẩy mạnh giai đoạn ${hottestStage.label} (${hottestStage.count} hồ sơ).` }
+            ]);
+        }
+    }, [chatMessages.length, kpiCompletion, currentMonth.month, hottestStage.label, hottestStage.count]);
+
+    const handleSendMessage = () => {
+        const text = chatInput.trim();
+        if (!text) return;
+        const userMsg = { id: Date.now(), from: 'user', text };
+        const botMsg = {
+            id: Date.now() + 1,
+            from: 'bot',
+            text: 'Tôi đã ghi nhận: "' + text + '". Bạn muốn tôi tóm tắt KPI hay pipeline không?'
+        };
+        setChatMessages((prev) => [...prev, userMsg, botMsg]);
+        setChatInput('');
+    };
 
     const scrollToSection = (ref, alignBottom = false, forceCenter = false) => {
         if (!ref?.current) return;
@@ -340,34 +372,47 @@ function App() {
                 <div className="assistant-panel__header">
                     <div>
                         <p className="assistant-kicker">Trợ lý AI</p>
-                        <h3 className="assistant-title">Tóm tắt & gợi ý hành động</h3>
+                        <h3 className="assistant-title">Gemini for BeeBox</h3>
                     </div>
                     <button className="assistant-close" onClick={() => setAssistantOpen(false)} aria-label="Đóng trợ lý">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
                 <div className="assistant-panel__body">
-                    <div className="assistant-card">
-                        <p className="assistant-label">Ưu tiên hôm nay</p>
-                        <ul className="assistant-list">
-                            <li>Đẩy mạnh giai đoạn {hottestStage.label} với {hottestStage.count} hồ sơ.</li>
-                            <li>Đạt {kpiCompletion}% KPI tháng {currentMonth.month} – tăng tốc pipeline.</li>
-                            <li>Chuẩn bị báo cáo nhanh cho sales lead.</li>
-                        </ul>
-                    </div>
-                    <div className="assistant-card">
-                        <p className="assistant-label">Lệnh nhanh</p>
-                        <div className="assistant-badges">
-                            {['Tóm tắt hiệu suất', 'Rủi ro pipeline', 'Đề xuất ưu tiên', 'Xuất báo cáo'].map((chip) => (
-                                <button key={chip} className="assistant-chip">{chip}</button>
+                    <div className="assistant-chat">
+                        <div className="assistant-messages">
+                            {chatMessages.map((msg) => (
+                                <div key={msg.id} className={`chat-row ${msg.from === 'bot' ? 'chat-row--bot' : 'chat-row--user'}`}>
+                                    <div className="chat-avatar">
+                                        {msg.from === 'bot' ? '🤖' : '🙋'}
+                                    </div>
+                                    <div className={`chat-bubble ${msg.from === 'bot' ? 'chat-bubble--bot' : 'chat-bubble--user'}`}>
+                                        {msg.text}
+                                    </div>
+                                </div>
+                            ))}
+                            <div ref={chatEndRef} />
+                        </div>
+                        <div className="assistant-suggestions">
+                            {['Tóm tắt KPI', 'Rủi ro pipeline', 'Đề xuất ưu tiên', 'Xuất báo cáo'].map((chip) => (
+                                <button
+                                    key={chip}
+                                    className="assistant-chip"
+                                    onClick={() => setChatInput(chip)}
+                                >
+                                    {chip}
+                                </button>
                             ))}
                         </div>
-                    </div>
-                    <div className="assistant-card">
-                        <p className="assistant-label">Chat ngay</p>
                         <div className="assistant-input">
-                            <input type="text" placeholder="Hỏi trợ lý về KPI, pipeline, nhân sự..." />
-                            <button className="assistant-send">Gửi</button>
+                            <input
+                                type="text"
+                                placeholder="Hỏi Gemini về KPI, pipeline, nhân sự..."
+                                value={chatInput}
+                                onChange={(e) => setChatInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                            />
+                            <button className="assistant-send" onClick={handleSendMessage}>Gửi</button>
                         </div>
                     </div>
                 </div>
