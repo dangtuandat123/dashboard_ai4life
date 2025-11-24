@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { pipelineStages } from '../data/mockData';
+import { useDashboardData } from '../data/mockData.jsx';
 
 const SalesPipeline = () => {
     const [activeIndex, setActiveIndex] = useState(null);
+    const { pipelineStages: pipelineData } = useDashboardData();
+    const pipelineStages = pipelineData.data || [];
 
-    const maxCount = Math.max(...pipelineStages.map((d) => d.count));
+    const maxCount = pipelineStages.length > 0 ? Math.max(...pipelineStages.map((d) => d.count)) : 1;
     const total = pipelineStages.reduce((sum, d) => sum + d.count, 0);
     const issued = pipelineStages[pipelineStages.length - 1]?.count || 0;
     const conversion = total ? Math.round((issued / total) * 100) : 0;
@@ -153,9 +155,8 @@ const SalesPipeline = () => {
                         return (
                             <div
                                 key={pt.data.id}
-                                className={`absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center transition-all duration-500 ease-out ${
-                                    isDimmed ? 'opacity-30 blur-[1px] scale-95' : 'opacity-100 scale-100'
-                                }`}
+                                className={`absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center transition-all duration-500 ease-out ${isDimmed ? 'opacity-30 blur-[1px] scale-95' : 'opacity-100 scale-100'
+                                    }`}
                                 style={{ left: `${(pt.x / svgWidth) * 100}%`, top: '50%' }}
                                 onMouseEnter={() => setActiveIndex(index)}
                                 onMouseLeave={() => setActiveIndex(null)}
@@ -163,15 +164,13 @@ const SalesPipeline = () => {
                             >
                                 <div className="relative group cursor-pointer flex flex-col items-center">
                                     <div
-                                        className={`absolute inset-0 rounded-full bg-white/30 blur-lg transform scale-150 transition-opacity duration-300 ${
-                                            isActive ? 'opacity-100 animate-pulse' : 'opacity-0'
-                                        }`}
+                                        className={`absolute inset-0 rounded-full bg-white/30 blur-lg transform scale-150 transition-opacity duration-300 ${isActive ? 'opacity-100 animate-pulse' : 'opacity-0'
+                                            }`}
                                     />
 
                                     <div
-                                        className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center backdrop-blur-xl border-2 shadow-2xl transition-all duration-300 ease-out ${
-                                            isActive ? 'scale-125 border-white' : 'hover:scale-110 border-white/20'
-                                        }`}
+                                        className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center backdrop-blur-xl border-2 shadow-2xl transition-all duration-300 ease-out ${isActive ? 'scale-125 border-white' : 'hover:scale-110 border-white/20'
+                                            }`}
                                         style={{
                                             backgroundColor: `${pt.data.color}20`,
                                             borderColor: isActive ? 'white' : `${pt.data.color}66`,
@@ -185,17 +184,15 @@ const SalesPipeline = () => {
 
                                     <div className={`mt-4 text-center transition-all duration-300 w-32 ${isActive ? 'translate-y-1' : ''}`}>
                                         <p
-                                            className={`text-xs md:text-sm font-bold uppercase tracking-widest text-slate-300 mb-1 drop-shadow-md ${
-                                                isActive ? 'text-white' : ''
-                                            }`}
+                                            className={`text-xs md:text-sm font-bold uppercase tracking-widest text-slate-300 mb-1 drop-shadow-md ${isActive ? 'text-white' : ''
+                                                }`}
                                         >
                                             {pt.data.label}
                                         </p>
                                         <div className="text-[11px] text-slate-300">{rate}% so với đầu vào</div>
                                         <div
-                                            className={`mt-1 w-2 h-2 rounded-full mx-auto transition-all duration-300 ${
-                                                isActive ? 'w-8 h-1.5 rounded-lg brightness-150' : ''
-                                            }`}
+                                            className={`mt-1 w-2 h-2 rounded-full mx-auto transition-all duration-300 ${isActive ? 'w-8 h-1.5 rounded-lg brightness-150' : ''
+                                                }`}
                                             style={{ backgroundColor: pt.data.color }}
                                         />
                                     </div>

@@ -1,8 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { Treemap, ResponsiveContainer, Tooltip } from 'recharts';
-import { salesQuantityData } from '../data/mockData';
+import { useDashboardData } from '../data/mockData.jsx';
+import { formatVietnameseNumber } from '../utils/formatters';
 
 const SoLuongBan = () => {
+    const { salesQuantity: quantityData } = useDashboardData();
+    const salesQuantityData = quantityData.data || [];
     const [hoveredIndex, setHoveredIndex] = useState(null);
 
     const treemapData = useMemo(
@@ -13,15 +16,30 @@ const SoLuongBan = () => {
                 let gradientFrom;
                 let gradientTo;
                 let glowColor;
-                if (percentage >= 90) {
+
+                // Color based on ranking (index 0 = best seller)
+                if (index === 0) {
+                    // #1 Best seller - Vibrant purple to pink gradient
+                    gradientFrom = '#a855f7';
+                    gradientTo = '#ec4899';
+                    glowColor = 'rgba(168, 85, 247, 0.5)';
+                } else if (index === 1) {
+                    // #2 - Cyan to blue gradient
+                    gradientFrom = '#06b6d4';
+                    gradientTo = '#3b82f6';
+                    glowColor = 'rgba(6, 182, 212, 0.4)';
+                } else if (percentage >= 90) {
+                    // High performance - Green gradient
                     gradientFrom = '#10b981';
                     gradientTo = '#059669';
                     glowColor = 'rgba(16, 185, 129, 0.4)';
                 } else if (percentage >= 70) {
+                    // Good performance - Orange gradient
                     gradientFrom = '#f59e0b';
                     gradientTo = '#d97706';
                     glowColor = 'rgba(245, 158, 11, 0.4)';
                 } else {
+                    // Low performance - Red gradient
                     gradientFrom = '#ef4444';
                     gradientTo = '#dc2626';
                     glowColor = 'rgba(239, 68, 68, 0.4)';
@@ -39,7 +57,7 @@ const SoLuongBan = () => {
                     index
                 };
             }),
-        []
+        [salesQuantityData]
     );
 
     const CustomContent = (props) => {
@@ -73,15 +91,16 @@ const SoLuongBan = () => {
                     y={y}
                     width={width}
                     height={height}
-                    fill={`url(#${gradientId})`}
-                    stroke={isHovered ? gradientFrom : '#1e293b'}
-                    strokeWidth={isHovered ? 2 : 1}
+                    fill={gradientFrom}
+                    stroke={isHovered ? gradientTo : '#1e293b'}
+                    strokeWidth={isHovered ? 3 : 1}
                     rx={4}
-                    opacity={isHovered ? 1 : 0.9}
+                    opacity={isHovered ? 1 : 0.95}
                     style={{
                         transition: 'all 0.3s ease',
                         transform: isHovered ? 'scale(1.02)' : 'scale(1)',
-                        transformOrigin: `${x + width / 2}px ${y + height / 2}px`
+                        transformOrigin: `${x + width / 2}px ${y + height / 2}px`,
+                        filter: 'brightness(1.1) saturate(1.2)'
                     }}
                 />
 
@@ -89,7 +108,7 @@ const SoLuongBan = () => {
                     {name}
                 </text>
                 <text x={x + width / 2} y={y + height / 2 + 4} textAnchor="middle" fill="#fff" fontSize={width > 90 ? 18 : 14} fontWeight="bold" style={{ pointerEvents: 'none' }}>
-                    {sold}
+                    {formatVietnameseNumber(sold)}
                 </text>
                 <text x={x + width / 2} y={y + height / 2 + 20} textAnchor="middle" fill="#e2e8f0" fontSize={width > 90 ? 10 : 8} fontWeight="500" style={{ pointerEvents: 'none' }}>
                     {percentage}%
@@ -106,10 +125,10 @@ const SoLuongBan = () => {
                     <p className="text-sm font-bold text-white mb-2">{data.name}</p>
                     <div className="space-y-1">
                         <p className="text-xs text-slate-300">
-                            Đã bán: <span className="font-bold text-cyan-400">{data.sold}</span>
+                            Đã bán: <span className="font-bold text-cyan-400">{formatVietnameseNumber(data.sold)}</span>
                         </p>
                         <p className="text-xs text-slate-300">
-                            Mục tiêu: <span className="font-bold text-slate-100">{data.target}</span>
+                            Mục tiêu: <span className="font-bold text-slate-100">{formatVietnameseNumber(data.target)}</span>
                         </p>
                         <p className="text-xs text-slate-300">
                             Hoàn thành: <span className="font-bold text-yellow-400">{data.percentage}%</span>
@@ -126,7 +145,7 @@ const SoLuongBan = () => {
             <div className="mb-2">
                 <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Quantity</p>
                 <h3 className="text-sm font-semibold text-white">Số lượng bán</h3>
-                <p className="text-[10px] text-slate-400">Phân bổ theo loại sản phẩm</p>
+                <p className="text-[10px] text-slate-400">TOP5 - Phân bổ theo loại sản phẩm</p>
             </div>
 
             <div className="flex-1 min-h-0">

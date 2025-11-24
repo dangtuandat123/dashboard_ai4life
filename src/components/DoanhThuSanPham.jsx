@@ -1,124 +1,176 @@
 import React, { useMemo, useState } from 'react';
-import { AlertTriangle, TrendingUp } from 'lucide-react';
-import { productLines } from '../data/mockData';
+import { AlertTriangle, TrendingUp, Target, ArrowUpRight } from 'lucide-react';
+import { useDashboardData } from '../data/mockData';
+import { formatVietnameseNumber } from '../utils/formatters';
 
 const DoanhThuSanPham = () => {
-    const [activeLineId, setActiveLineId] = useState(productLines[0].id);
-    const activeLine = useMemo(() => productLines.find((line) => line.id === activeLineId), [activeLineId]);
+    const { productLines: linesData, productTypes: typesData } = useDashboardData();
+
+    const productLines = useMemo(() => {
+        const lines = linesData.data || [];
+        const types = typesData.data || [];
+
+        const merged = lines.map(line => {
+            const lineTypes = types.filter(type => type.category === line.name);
+            return {
+                ...line,
+                productTypes: lineTypes.map(type => ({
+                    name: type.name,
+                    revenue: type.revenue,
+                    target: type.target
+                }))
+            };
+        });
+
+        return merged.sort((a, b) => {
+            const percentA = a.revenue / a.target;
+            const percentB = b.revenue / b.target;
+            const groupA = percentA < 1 ? 0 : 1;
+            const groupB = percentB < 1 ? 0 : 1;
+            if (groupA !== groupB) return groupA - groupB;
+            return b.revenue - a.revenue;
+        });
+    }, [linesData.data, typesData.data]);
+
+    const [activeLineId, setActiveLineId] = useState(productLines[0]?.id || 1);
+    const activeLine = useMemo(() => productLines.find((line) => line.id === activeLineId), [activeLineId, productLines]);
+
+    const sortedProductTypes = useMemo(() => {
+        const types = activeLine?.productTypes || [];
+        return [...types].sort((a, b) => {
+            const percentA = a.revenue / a.target;
+            const percentB = b.revenue / b.target;
+            const groupA = percentA < 1 ? 0 : 1;
+            const groupB = percentB < 1 ? 0 : 1;
+            if (groupA !== groupB) return groupA - groupB;
+            return b.revenue - a.revenue;
+        });
+    }, [activeLine?.productTypes]);
 
     const { totalRevenue, totalTarget } = useMemo(
         () => ({
-            totalRevenue: productLines.reduce((sum, line) => sum + line.revenue, 0),
-            totalTarget: productLines.reduce((sum, line) => sum + line.target, 0)
+            totalRevenue: productLines.reduce((sum, line) => sum + (line.revenue || 0), 0),
+            totalTarget: productLines.reduce((sum, line) => sum + (line.target || 0), 0)
         }),
-        []
+        [productLines]
     );
 
     const overallPercent = Math.round((totalRevenue / totalTarget) * 100);
     const activePercent = activeLine ? Math.round((activeLine.revenue / activeLine.target) * 100) : 0;
 
+    // Donut chart calculation
+    const donutDegrees = Math.min(overallPercent, 100) * 3.6;
+    const donutColor = overallPercent >= 100 ? '#34d399' : '#fbbf24'; // emerald-400 : amber-400
+
     return (
-        <div className="glass rounded-xl p-3 h-full flex flex-col border border-white/10 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-3">
-                <div>
-                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Product revenue</p>
-                    <h3 className="text-sm font-semibold text-white">Doanh thu theo dòng sản phẩm</h3>
-                    <p className="text-[10px] text-slate-400">Tổng hợp và drill-down chi tiết</p>
+        <div className="glass rounded-xl p-2 h-full flex flex-col border border-white/10 backdrop-blur-md overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-2 px-1">
+                <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/10 border border-cyan-500/30">
+                        <TrendingUp className="w-4 h-4 text-cyan-400" />
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-bold text-white leading-none">Doanh thu sản phẩm</h3>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Hiệu suất so với mục tiêu KPI</p>
+                    </div>
                 </div>
-                <div className="w-9 h-9 rounded-2xl bg-cyan-500/15 flex items-center justify-center border border-cyan-500/40">
-                    <TrendingUp className="w-4 h-4 text-cyan-300" />
+                <div className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] text-slate-300 font-medium">
+                    Q4-2025
                 </div>
             </div>
 
-            <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
-                {/* KPI gọn hơn */}
-                <div className="col-span-12 lg:col-span-3 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-indigo-500/10 rounded-xl border border-cyan-500/30 p-3 flex flex-col">
-                    <div className="flex items-center justify-between text-[11px] text-slate-300 mb-1">
-                        <span>Tổng doanh thu</span>
-                        <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] border border-white/10">Toàn bộ</span>
-                    </div>
-                    <div className="text-xl font-bold text-white leading-tight">
-                        {totalRevenue} <span className="text-sm text-slate-300">tỷ</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[12px] mt-1">
-                        <span className={`${overallPercent >= 100 ? 'text-emerald-400' : 'text-amber-300'} font-semibold`}>
-                            {overallPercent}% mục tiêu
-                        </span>
-                        <span className="text-[11px] text-slate-400">/ {totalTarget} tỷ</span>
-                    </div>
-                    <div className="mt-2 space-y-1">
-                        <div className="flex justify-between text-[11px] text-slate-300">
-                            <span>Hoàn thành</span>
-                            <span>{overallPercent}%</span>
-                        </div>
-                        <div className="h-1.5 bg-slate-900/50 rounded-full overflow-hidden border border-white/5">
+            <div className="grid grid-cols-12 gap-2 flex-1 min-h-0">
+                {/* Left Column: KPI Summary with Donut Chart */}
+                <div className="col-span-12 lg:col-span-3 flex flex-col gap-2">
+                    <div className="flex-1 bg-gradient-to-b from-white/5 to-transparent rounded-lg border border-white/10 p-3 flex flex-col items-center justify-center relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-cyan-500/5 blur-xl group-hover:bg-cyan-500/10 transition-all duration-500" />
+
+                        {/* Donut Chart */}
+                        <div className="relative w-24 h-24 mb-3">
                             <div
-                                className="h-full bg-gradient-to-r from-cyan-500 via-emerald-400 to-lime-400 shadow-[0_0_10px_rgba(34,211,238,0.3)]"
-                                style={{ width: `${Math.min(overallPercent, 120)}%` }}
-                            />
+                                className="w-full h-full rounded-full"
+                                style={{
+                                    background: `conic-gradient(${donutColor} ${donutDegrees}deg, rgba(255,255,255,0.1) ${donutDegrees}deg)`
+                                }}
+                            >
+                                <div className="absolute inset-2 bg-[#0f172a] rounded-full flex flex-col items-center justify-center z-10">
+                                    <span className={`text-lg font-bold ${overallPercent >= 100 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                        {overallPercent}%
+                                    </span>
+                                    <span className="text-[8px] text-slate-400 uppercase tracking-wider">Hoàn thành</span>
+                                </div>
+                            </div>
+                            {/* Glow effect behind chart */}
+                            <div className={`absolute inset-0 rounded-full blur-md opacity-40 ${overallPercent >= 100 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                         </div>
-                    </div>
-                    {activeLine && (
-                        <div className="mt-3 p-2 rounded-lg bg-white/5 border border-white/10">
-                            <div className="text-[10px] text-slate-400 uppercase tracking-[0.08em]">Dòng đang xem</div>
-                            <div className="flex items-center justify-between text-sm text-white font-semibold">
-                                <span className="truncate">{activeLine.name}</span>
-                                <span className={activePercent >= 100 ? 'text-emerald-400' : 'text-amber-300'}>{activePercent}% KPI</span>
+
+                        <div className="text-center z-10 w-full">
+                            <div className="text-[10px] text-slate-400 mb-0.5">Tổng doanh thu</div>
+                            <div className="text-lg font-bold text-white tracking-tight">{formatVietnameseNumber(totalRevenue)}</div>
+
+                            <div className="mt-3 w-full flex justify-center">
+                                <div className="bg-white/5 rounded p-1.5 text-center border border-white/5 w-3/4">
+                                    <div className="text-[9px] text-slate-400 flex items-center justify-center gap-1">
+                                        <Target size={10} /> Mục tiêu
+                                    </div>
+                                    <div className="text-[10px] font-semibold text-slate-200 mt-0.5">{formatVietnameseNumber(totalTarget)}</div>
+                                </div>
                             </div>
                         </div>
-                    )}
+                    </div>
                 </div>
 
-                {/* Dòng sản phẩm */}
-                <div className="col-span-12 lg:col-span-5 flex flex-col gap-2 overflow-hidden">
-                    <div className="flex items-center justify-between">
-                        <div className="text-[10px] text-slate-400 uppercase tracking-[0.08em]">Dòng sản phẩm</div>
-                        <span className="text-[11px] text-slate-400">Top {productLines.length}</span>
+                {/* Middle Column: Product Lines */}
+                <div className="col-span-12 lg:col-span-5 flex flex-col overflow-hidden">
+                    <div className="flex items-center justify-between mb-1.5 px-1">
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Dòng sản phẩm</span>
                     </div>
-                    <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-y-auto pr-1">
-                        {productLines.map((line) => {
+                    <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-1.5">
+                        {productLines.slice(0, 7).map((line) => {
                             const percentage = Math.round((line.revenue / line.target) * 100);
                             const isActive = line.id === activeLineId;
-                            const isUnderperforming = percentage < 80;
+                            const isMetKPI = percentage >= 100;
 
                             return (
                                 <button
                                     key={line.id}
                                     onClick={() => setActiveLineId(line.id)}
-                                    className={`w-full text-left rounded-lg border p-3 transition-all backdrop-blur-sm ${
-                                        isActive
-                                            ? 'bg-white/10 border-cyan-500/60 shadow-[0_10px_25px_rgba(34,211,238,0.15)]'
-                                            : 'bg-white/5 border-white/10 hover:border-cyan-500/40'
-                                    }`}
+                                    className={`w-full text-left rounded-lg p-2 transition-all duration-300 border relative overflow-hidden group ${isActive
+                                        ? 'bg-cyan-500/10 border-cyan-400/80 shadow-[0_0_20px_rgba(34,211,238,0.15)] ring-1 ring-cyan-400/30'
+                                        : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
+                                        }`}
                                 >
-                                    <div className="flex items-center justify-between">
-                                        <div className="text-sm font-semibold text-white">{line.name}</div>
-                                        <div className="flex items-center gap-2">
-                                            {line.isHighlight && (
-                                                <span className="text-[9px] font-bold px-2 py-1 rounded-full bg-cyan-500/20 text-cyan-200 border border-cyan-500/30">
-                                                    Mới
-                                                </span>
-                                            )}
-                                            {isUnderperforming && (
-                                                <span className="text-[9px] font-bold px-2 py-1 rounded-full bg-red-500/20 text-red-200 border border-red-500/30 flex items-center gap-1">
-                                                    <AlertTriangle size={10} />
-                                                    KPI
-                                                </span>
-                                            )}
+                                    {isActive && <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-cyan-400" />}
+
+                                    <div className="flex justify-between items-start mb-1">
+                                        <div className="font-medium text-xs text-white truncate pr-2 group-hover:text-cyan-200 transition-colors">
+                                            {line.name}
+                                        </div>
+                                        {!isMetKPI && (
+                                            <div className="flex items-center gap-1 text-[9px] text-red-300 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">
+                                                <AlertTriangle size={8} />
+                                                <span>Thiếu KPI</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-end justify-between mb-1.5">
+                                        <div className="text-[10px] text-slate-400">
+                                            <span className="text-slate-200 font-semibold">{formatVietnameseNumber(line.revenue)}</span>
+                                            <span className="mx-1">/</span>
+                                            {formatVietnameseNumber(line.target)}
+                                        </div>
+                                        <div className={`text-[10px] font-bold ${isMetKPI ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                            {percentage}%
                                         </div>
                                     </div>
-                                    <div className="mt-1 flex items-center justify-between text-xs text-slate-300">
-                                        <span>
-                                            {line.revenue} tỷ / {line.target} tỷ
-                                        </span>
-                                        <span className={percentage >= 100 ? 'text-emerald-400' : 'text-amber-300'}>{percentage}%</span>
-                                    </div>
-                                    <div className="mt-2 h-2 bg-slate-900/50 rounded-full overflow-hidden border border-white/5">
+
+                                    <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
                                         <div
-                                            className={`h-full ${
-                                                percentage >= 100 ? 'bg-gradient-to-r from-emerald-400 to-lime-400' : 'bg-gradient-to-r from-amber-400 to-orange-500'
-                                            }`}
-                                            style={{ width: `${Math.min(percentage, 120)}%` }}
+                                            className={`h-full rounded-full transition-all duration-700 ${isMetKPI ? 'bg-emerald-500' : 'bg-amber-500'
+                                                }`}
+                                            style={{ width: `${Math.min(percentage, 100)}%` }}
                                         />
                                     </div>
                                 </button>
@@ -127,45 +179,46 @@ const DoanhThuSanPham = () => {
                     </div>
                 </div>
 
-                {/* Loại sản phẩm */}
-                <div className="col-span-12 lg:col-span-4 flex flex-col gap-2 overflow-hidden">
-                    <div className="flex items-center justify-between">
-                        <div className="text-[10px] text-slate-400 uppercase tracking-[0.08em]">Loại sản phẩm</div>
+                {/* Right Column: Product Types */}
+                <div className="col-span-12 lg:col-span-4 flex flex-col overflow-hidden">
+                    <div className="flex items-center justify-between mb-1.5 px-1">
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Chi tiết loại</span>
                         {activeLine && (
-                            <div className="text-[10px] text-slate-300">
-                                {activeLine.name} · {activePercent}% KPI
-                            </div>
+                            <span className="text-[9px] text-cyan-400 bg-cyan-900/30 px-1.5 py-0.5 rounded border border-cyan-500/20 truncate max-w-[100px]">
+                                {activeLine.name}
+                            </span>
                         )}
                     </div>
-                    <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-y-auto pr-1">
-                        {activeLine?.productTypes.map((product) => {
+                    <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-1.5">
+                        {sortedProductTypes.slice(0, 6).map((product, idx) => {
                             const percentage = Math.round((product.revenue / product.target) * 100);
-                            const hasWarning = percentage < 70;
+                            const isMetKPI = percentage >= 100;
 
                             return (
                                 <div
-                                    key={product.name}
-                                    className="rounded-lg border border-white/10 bg-white/5 p-3 hover:border-cyan-500/40 transition-all backdrop-blur-sm"
+                                    key={idx}
+                                    className="rounded-lg border border-white/5 bg-white/[0.02] p-2 hover:bg-white/5 transition-colors duration-200"
                                 >
-                                    <div className="flex justify-between items-start mb-1">
-                                        <div>
-                                            <h4 className="font-semibold text-white text-sm">{product.name}</h4>
-                                            <div className="text-[11px] text-slate-400">Mục tiêu: {product.target} tỷ</div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-xs text-slate-200 font-medium truncate flex-1 pr-2">
+                                            {product.name}
+                                        </span>
+                                        <div className={`text-[10px] font-bold px-1.5 rounded ${isMetKPI ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                                            }`}>
+                                            {percentage}%
                                         </div>
-                                        {hasWarning && (
-                                            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full bg-red-500/15 text-red-200 border border-red-500/30">
-                                                <AlertTriangle size={10} />
-                                                Cần đẩy
-                                            </span>
-                                        )}
                                     </div>
-                                    <div className="relative h-3.5 bg-slate-900/50 rounded-full overflow-hidden border border-white/5">
+
+                                    <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+                                        <span>{formatVietnameseNumber(product.revenue)}</span>
+                                        <span>Mục tiêu: {formatVietnameseNumber(product.target)}</span>
+                                    </div>
+
+                                    <div className="h-0.5 bg-slate-800 w-full rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-gradient-to-r from-pink-500 via-rose-500 to-orange-400 flex items-center justify-end pr-2 text-[10px] font-semibold text-white shadow-[0_0_12px_rgba(244,63,94,0.3)]"
-                                            style={{ width: `${Math.min(percentage, 120)}%` }}
-                                        >
-                                            {product.revenue} tỷ
-                                        </div>
+                                            className={`h-full transition-all duration-500 ${isMetKPI ? 'bg-emerald-500' : 'bg-red-500'}`}
+                                            style={{ width: `${Math.min(percentage, 100)}%` }}
+                                        />
                                     </div>
                                 </div>
                             );

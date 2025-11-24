@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { pipelineStages, pypPerformanceData } from './data/mockData';
+import { useDashboardData } from './data/mockData.jsx';
 import PYPPerformance from './components/PYPPerformance';
 import SalesPipeline from './components/SalesPipeline';
 import TopPerformersHeatmap from './components/TopPerformersHeatmap';
@@ -12,10 +12,30 @@ import SoLuongBan from './components/SoLuongBan';
 function App() {
     const [activeSection, setActiveSection] = useState('perf');
     const [showScrollTop, setShowScrollTop] = useState(false);
-    const currentMonth = pypPerformanceData[pypPerformanceData.length - 1];
-    const kpiCompletion = Math.round((currentMonth.actual / currentMonth.target) * 100);
-    const totalPipeline = pipelineStages.reduce((sum, stage) => sum + stage.count, 0);
-    const hottestStage = pipelineStages.reduce((max, stage) => (stage.count > max.count ? stage : max), pipelineStages[0]);
+
+    // Format currency: >= 1 tỷ -> tỷ, else triệu
+    const formatCurrency = (value) => {
+        if (value >= 1000000000) {
+            return { value: (value / 1000000000).toFixed(2), unit: 'tỷ' };
+        }
+        return { value: Math.round(value / 1000000), unit: 'triệu' };
+    };
+
+    // Get real-time data from Supabase (auto-refreshes every 15s)
+    const { pypPerformance, pipelineStages } = useDashboardData();
+
+    // Use real data or fallback to default values
+    const pypData = pypPerformance.data || [];
+    const pipelineData = pipelineStages.data || [];
+
+    const currentMonth = pypData[pypData.length - 1] || { actual: 0, target: 0, month: 'T12' };
+    const kpiCompletion = currentMonth.target > 0
+        ? Math.round((currentMonth.actual / currentMonth.target) * 100)
+        : 0;
+    const totalPipeline = pipelineData.reduce((sum, stage) => sum + (stage.count || 0), 0);
+    const hottestStage = pipelineData.length > 0
+        ? pipelineData.reduce((max, stage) => ((stage.count || 0) > (max.count || 0) ? stage : max), pipelineData[0])
+        : { label: 'N/A', count: 0, color: '#gray' };
 
     const perfRef = useRef(null);
     const productRef = useRef(null);
@@ -77,11 +97,10 @@ function App() {
                         key={item.key}
                         onClick={() => scrollToSection(item.ref, item.alignBottom, item.forceCenter)}
                         aria-label={`Đi tới ${item.label}`}
-                        className={`px-3 py-2 rounded-lg border text-xs font-semibold transition shadow-[0_10px_30px_rgba(0,0,0,0.25)] backdrop-blur-md ${
-                            activeSection === item.key
-                                ? 'bg-cyan-500/30 border-cyan-300 text-white'
-                                : 'bg-white/10 border-white/20 text-white hover:bg-cyan-500/20 hover:border-cyan-400/60'
-                        }`}
+                        className={`px-3 py-2 rounded-lg border text-xs font-semibold transition shadow-[0_10px_30px_rgba(0,0,0,0.25)] backdrop-blur-md ${activeSection === item.key
+                            ? 'bg-cyan-500/30 border-cyan-300 text-white'
+                            : 'bg-white/10 border-white/20 text-white hover:bg-cyan-500/20 hover:border-cyan-400/60'
+                            }`}
                     >
                         {item.label}
                     </button>
@@ -109,7 +128,7 @@ function App() {
                     <div className="flex items-center gap-2">
                         <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md text-xs text-slate-200 flex items-center gap-2">
                             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.8)]" />
-                            Tháng {currentMonth.month}, 2024
+                            Tháng {currentMonth.month}, {new Date().getFullYear()}
                         </div>
                         <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 via-emerald-500 to-lime-500 text-xs font-semibold text-slate-900 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-400/40 transition">
                             Xuất báo cáo
@@ -130,10 +149,11 @@ function App() {
                             <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
                                 <p className="text-[10px] text-emerald-400 uppercase tracking-[0.12em]">KPI tháng</p>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-2xl font-bold text-white">{currentMonth.actual} tỷ</span>
+                                    <span className="text-2xl font-bold text-white">{formatCurrency(currentMonth.actual).value}</span>
+                                    <span className="text-sm text-slate-300 ml-1">{formatCurrency(currentMonth.actual).unit}</span>
                                     <span className="text-xs text-emerald-300 font-semibold">{kpiCompletion}% KPI</span>
                                 </div>
-                                <p className="text-[11px] text-slate-400">Mục tiêu: {currentMonth.target} tỷ</p>
+                                <p className="text-[11px] text-slate-400">Mục tiêu: {formatCurrency(currentMonth.target).value} {formatCurrency(currentMonth.target).unit}</p>
                             </div>
 
                             <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
