@@ -613,7 +613,7 @@ function App() {
                                 ➤
                             </button>
                         </div>
-                        <div className="assistant-suggestions">
+                        <div className={`assistant-suggestions ${suggestLoading || autoSuggestions.length > 0 ? 'is-visible' : ''}`}>
                             {suggestLoading && (
                                 <div className="suggest-loading">
                                     <span className="bulb">💡</span>
