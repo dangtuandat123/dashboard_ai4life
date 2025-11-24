@@ -6,7 +6,7 @@
 
 :root {
   color-scheme: dark;
-  --assistant-width: clamp(300px, 30vw, 420px);
+  --assistant-width: clamp(300px, 35vw, 500px);
   --bg: #05060d;
   --bg-accent: radial-gradient(circle at 15% 20%, rgba(34, 211, 238, 0.08), transparent 30%),
     radial-gradient(circle at 80% 15%, rgba(168, 85, 247, 0.08), transparent 28%),
@@ -38,7 +38,7 @@
 
 :root[data-theme='light'] {
   color-scheme: light;
-  --assistant-width: clamp(300px, 30vw, 420px);
+  --assistant-width: clamp(300px, 35vw, 500px);
   --bg: #f6f8fb;
   --bg-accent: radial-gradient(circle at 20% 15%, rgba(14, 165, 233, 0.15), transparent 35%),
     radial-gradient(circle at 80% 10%, rgba(99, 102, 241, 0.12), transparent 30%),
@@ -769,17 +769,17 @@ body {
 
 @media (max-width: 1024px) {
   .assistant-panel {
-    width: min(var(--assistant-width), 420px);
+    width: min(var(--assistant-width), 500px);
   }
   .dashboard-container.assistant-open .scroll-top {
-    right: calc(min(var(--assistant-width), 420px) + 12px);
+    right: calc(min(var(--assistant-width), 500px) + 12px);
     bottom: 20px;
   }
   .dashboard-container.assistant-open .assistant-toggle {
-    right: calc(min(var(--assistant-width), 420px) + 4px);
+    right: calc(min(var(--assistant-width), 500px) + 4px);
   }
   .content-wrapper.content-with-assistant {
-    margin-right: calc(min(var(--assistant-width), 420px) + 4px);
+    margin-right: calc(min(var(--assistant-width), 500px) + 4px);
   }
   .dashboard-container.assistant-open .quick-nav {
     right: auto;
