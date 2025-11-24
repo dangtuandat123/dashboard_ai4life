@@ -724,9 +724,11 @@ body {
 }
 
 .chat-bubble--user {
-  background: linear-gradient(135deg, #ecfeaa, #bef264);
-  border: 1px solid rgba(190, 242, 100, 0.6);
+  background: linear-gradient(135deg, #eaff9f, #c9f55c, #eaff9f);
+  background-size: 220% 220%;
+  border: 1px solid rgba(201, 245, 92, 0.75);
   color: #0b1224;
+  animation: gradientShift 5s ease infinite, dashPulse 2.4s ease-in-out infinite;
 }
 
 .chat-bubble--dash {

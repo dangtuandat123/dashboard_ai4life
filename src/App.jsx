@@ -708,20 +708,6 @@ function App() {
                                     </div>
                                 );
                             })}
-                            {isSending && (
-                                <div className="chat-row chat-row--bot">
-                                    <div className="chat-bubble chat-bubble--bot chat-bubble--thinking">
-                                        <div className="ai-thinking ai-thinking--rich">
-                                            <span className="spark" />
-                                            <span className="spark" />
-                                            <span className="spark" />
-                                            <span className="bulb" aria-hidden="true">🧠</span>
-                                            <span>BeeBox đang suy luận...</span>
-                                            <span className="ai-thinking__timer">{sendTimer}s</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                             <div ref={chatEndRef} />
                         </div>
                         <div className={`assistant-suggestions ${suggestLoading || autoSuggestions.length > 0 ? 'is-visible' : ''}`}>
