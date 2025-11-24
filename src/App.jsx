@@ -126,6 +126,18 @@ function App() {
     }, [chatMessages.length, kpiCompletion, currentMonth.month, hottestStage.label, hottestStage.count]);
 
     const stripChartStyle = (html = '') => html.replace(/<style[\s\S]*?<\/style>/gi, '');
+    const injectChartStyle = (html = '') => {
+        const style = `<style>
+    body, html { height: 100%; margin: 0; }
+    .chart-container { position: relative; width: 100%; height: 100vh; }
+    canvas { width: 100% !important; height: 100% !important; }
+    </style>`;
+        if (!html) return style;
+        if (html.includes('</head>')) {
+            return html.replace('</head>', `${style}</head>`);
+        }
+        return `${style}${html}`;
+    };
 
     const parseWebhookPayload = (raw) => {
         let payload = raw;
@@ -147,7 +159,8 @@ function App() {
                     return { id: Date.now() + idx, from: 'bot', type: 'text', text: data.data || '' };
                 }
                 if (data.type === 'chart') {
-                    return { id: Date.now() + idx, from: 'bot', type: 'chart', html: stripChartStyle(data.data || '') };
+                    const cleaned = stripChartStyle(data.data || '');
+                    return { id: Date.now() + idx, from: 'bot', type: 'chart', html: injectChartStyle(cleaned) };
                 }
                 if (data.type === 'table') {
                     return { id: Date.now() + idx, from: 'bot', type: 'table', columns: data.data?.columns || [], rows: data.data?.rows || [] };
@@ -182,14 +195,30 @@ function App() {
 
     const handleChartLoad = (msgId, event) => {
         const iframe = event.currentTarget;
-        try {
-            const doc = iframe.contentWindow?.document;
-            if (!doc) return;
-            const height = doc.documentElement.scrollHeight || doc.body.scrollHeight || 360;
-            setChartHeights((prev) => ({ ...prev, [msgId]: height }));
-        } catch {
-            // ignore cross-origin issues
-        }
+        let stable = 0;
+        let iterations = 0;
+        const poll = (prev = 0) => {
+            iterations += 1;
+            try {
+                const doc = iframe.contentWindow?.document;
+                if (!doc) return;
+                const container = doc.querySelector('.chart-container') || doc.body;
+                const rect = container?.getBoundingClientRect();
+                const containerHeight = rect?.height || container?.scrollHeight || 0;
+                const contentHeight = Math.max(containerHeight, 200);
+                const padded = contentHeight + 12;
+                setChartHeights((prevHeights) => {
+                    if (prevHeights[msgId] === padded) return prevHeights;
+                    return { ...prevHeights, [msgId]: padded };
+                });
+                stable = Math.abs(contentHeight - prev) < 1 ? stable + 1 : 0;
+                if (stable >= 2 || iterations >= 10) return;
+                requestAnimationFrame(() => poll(contentHeight));
+            } catch {
+                // ignore cross-origin issues
+            }
+        };
+        poll();
     };
 
     const stopScrollBubble = (e) => e.stopPropagation();
@@ -473,7 +502,7 @@ function App() {
                                                         title={`chart-${msg.id}`}
                                                         srcDoc={msg.html}
                                                         sandbox="allow-scripts"
-                                                        style={{ height: chartHeights[msg.id] ? `${chartHeights[msg.id]}px` : '360px' }}
+                                                        style={{ height: chartHeights[msg.id] ? `${chartHeights[msg.id]}px` : '280px' }}
                                                         onLoad={(e) => handleChartLoad(msg.id, e)}
                                                     />
                                                 </div>

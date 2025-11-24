@@ -624,7 +624,9 @@ body {
 
 .chat-chart iframe {
   width: 100%;
-  min-height: 220px;
+  height: auto;
+  display: block;
+  overflow: hidden;
   border: none;
 }
 
@@ -690,6 +692,8 @@ body {
   border: none;
   box-shadow: none;
   border-radius: 10px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .chat-bubble--bot {
