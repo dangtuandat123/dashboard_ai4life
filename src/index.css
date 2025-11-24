@@ -611,6 +611,12 @@ body {
   height: 100%;
 }
 
+.assistant-chat__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 4px 0 4px;
+}
+
 .assistant-messages {
   flex: 1;
   overflow-y: auto;
