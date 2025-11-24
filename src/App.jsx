@@ -331,7 +331,7 @@ function App() {
                     aria-pressed={assistantOpen}
                 >
                     <span className="assistant-toggle__glow" />
-                    <Bot className="w-4 h-4 relative" />
+                    <span className="assistant-bee" role="img" aria-hidden="true">🐝</span>
                     {showGreeting && <span className="assistant-bubble">Chào bạn, tôi là trợ lý AI phân tích dữ liệu BeeBox 👋</span>}
                 </button>
             )}
