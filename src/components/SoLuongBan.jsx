@@ -5,6 +5,9 @@ import { formatVietnameseNumber } from '../utils/formatters';
 
 const SoLuongBan = () => {
     const { salesQuantity: quantityData } = useDashboardData();
+    const firePrompt = (title, text) => {
+        window.dispatchEvent(new CustomEvent('bb-insight', { detail: { title, text } }));
+    };
     const salesQuantityData = quantityData.data || [];
     const [hoveredIndex, setHoveredIndex] = useState(null);
 
@@ -61,7 +64,7 @@ const SoLuongBan = () => {
     );
 
     const CustomContent = (props) => {
-        const { x, y, width, height, name, sold, percentage, gradientFrom, gradientTo, glowColor, index } = props;
+        const { x, y, width, height, name, sold, percentage, gradientFrom, gradientTo, glowColor, index, target } = props;
 
         if (width < 35 || height < 25) return null;
 
@@ -69,7 +72,17 @@ const SoLuongBan = () => {
         const gradientId = `gradient-${index}`;
 
         return (
-            <g onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} style={{ cursor: 'pointer' }}>
+            <g
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                onClick={() =>
+                    firePrompt(
+                        'Số lượng bán',
+                        `${name}: bán ${formatVietnameseNumber(sold)} / mục tiêu ${formatVietnameseNumber(target)} (${percentage}%)`
+                    )
+                }
+                style={{ cursor: 'pointer' }}
+            >
                 <defs>
                     <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor={gradientFrom} stopOpacity={0.9} />

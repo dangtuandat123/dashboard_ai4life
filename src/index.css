@@ -439,6 +439,18 @@ body {
   transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, background-position 0.25s ease;
 }
 
+.metric-click,
+.chart-click {
+  cursor: pointer;
+  position: relative;
+}
+
+.metric-click:hover,
+.chart-click:hover {
+  border-color: rgba(34, 211, 238, 0.4) !important;
+  box-shadow: 0 14px 32px rgba(34, 211, 238, 0.15);
+}
+
 .assistant-toggle {
   position: fixed;
   right: 12px;
@@ -715,6 +727,50 @@ body {
   background: linear-gradient(135deg, #ecfeaa, #bef264);
   border: 1px solid rgba(190, 242, 100, 0.6);
   color: #0b1224;
+}
+
+.chat-bubble--dash {
+  position: relative;
+  background: linear-gradient(120deg, #c084fc, #7c3aed, #a78bfa);
+  background-size: 200% 200%;
+  border: 1px solid rgba(124, 58, 237, 0.8);
+  box-shadow: 0 12px 28px rgba(124, 58, 237, 0.35), 0 0 14px rgba(192, 132, 252, 0.45);
+  animation: dashPulse 2.4s ease-in-out infinite, dashGradient 5s ease infinite;
+  color: #0b1224;
+}
+
+.chat-bubble--dash::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  border: 1px solid rgba(99, 102, 241, 0.55);
+  opacity: 0.9;
+  pointer-events: none;
+  animation: dashGlow 3s linear infinite;
+}
+
+.chat-bubble--dash .chat-text {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+@keyframes dashPulse {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes dashGlow {
+  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.35); }
+  60% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+
+@keyframes dashGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .assistant-suggestions {

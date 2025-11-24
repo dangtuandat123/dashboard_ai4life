@@ -85,6 +85,10 @@ const SalesPipeline = () => {
         return `${path} Z`;
     }, [points]);
 
+    const firePrompt = (title, text) => {
+        window.dispatchEvent(new CustomEvent('bb-insight', { detail: { title, text } }));
+    };
+
     return (
         <div className="glass rounded-xl p-5 h-full flex flex-col border border-white/10 backdrop-blur-md relative overflow-hidden">
             {/* Header */}
@@ -196,6 +200,12 @@ const SalesPipeline = () => {
                                 style={{ left: `${(pt.x / svgWidth) * 100}%`, top: '50%' }}
                                 onMouseEnter={() => setActiveIndex(index)}
                                 onMouseLeave={() => setActiveIndex(null)}
+                                onClick={() =>
+                                    firePrompt(
+                                        'Sales Pipeline',
+                                        `Giai đoạn ${pt.data.label || pt.data.name || pt.data.stage}: ${pt.data.count} hồ sơ (tổng ${total} lead)`
+                                    )
+                                }
                             >
                                 {/* The Node Circle */}
                                 <div className="relative group cursor-pointer">

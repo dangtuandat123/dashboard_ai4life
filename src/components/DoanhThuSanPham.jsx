@@ -6,6 +6,10 @@ import { formatVietnameseNumber } from '../utils/formatters';
 const DoanhThuSanPham = () => {
     const { productLines: linesData, productTypes: typesData } = useDashboardData();
 
+    const firePrompt = (title, text) => {
+        window.dispatchEvent(new CustomEvent('bb-insight', { detail: { title, text } }));
+    };
+
     const productLines = useMemo(() => {
         const lines = linesData.data || [];
         const types = typesData.data || [];
@@ -135,7 +139,13 @@ const DoanhThuSanPham = () => {
                             return (
                                 <button
                                     key={line.id}
-                                    onClick={() => setActiveLineId(line.id)}
+                                    onClick={() => {
+                                        setActiveLineId(line.id);
+                                        firePrompt(
+                                            'Doanh thu theo dòng sản phẩm',
+                                            `${line.name}: đạt ${formatVietnameseNumber(line.revenue)} / mục tiêu ${formatVietnameseNumber(line.target)}, tiến độ ${Math.round((line.revenue / line.target) * 100)}%`
+                                        );
+                                    }}
                                     className={`w-full text-left rounded-lg p-2 transition-all duration-300 border relative overflow-hidden group ${isActive
                                         ? 'bg-cyan-500/10 border-cyan-400/80 shadow-[0_0_20px_rgba(34,211,238,0.15)] ring-1 ring-cyan-400/30'
                                         : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
@@ -197,7 +207,13 @@ const DoanhThuSanPham = () => {
                             return (
                                 <div
                                     key={idx}
-                                    className="rounded-lg border border-white/5 bg-white/[0.02] p-2 hover:bg-white/5 transition-colors duration-200"
+                                    className="rounded-lg border border-white/5 bg-white/[0.02] p-2 hover:bg-white/5 transition-colors duration-200 cursor-pointer"
+                                    onClick={() =>
+                                        firePrompt(
+                                            'Chi tiết loại sản phẩm',
+                                            `${product.name}: doanh thu ${formatVietnameseNumber(product.revenue)} / mục tiêu ${formatVietnameseNumber(product.target)}, tiến độ ${percentage}%`
+                                        )
+                                    }
                                 >
                                     <div className="flex justify-between items-center mb-1">
                                         <span className="text-xs text-slate-200 font-medium truncate flex-1 pr-2">

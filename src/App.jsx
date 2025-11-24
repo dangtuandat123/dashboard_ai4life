@@ -53,7 +53,15 @@ function App() {
     };
 
     // Get real-time data from Supabase (auto-refreshes every 15s)
-    const { pypPerformance, pipelineStages } = useDashboardData();
+    const {
+        pypPerformance,
+        pipelineStages,
+        financialData,
+        productLines,
+        salesQuantity,
+        salesChannels,
+        topPerformersHeatmap
+    } = useDashboardData();
 
     // Use real data or fallback to default values
     const pypData = pypPerformance.data || [];
@@ -73,6 +81,41 @@ function App() {
     const financeRef = useRef(null);
 
     const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const latestFinance = financialData?.data?.[financialData.data.length - 1] || {};
+    const latestRevenue = Number(latestFinance?.revenue) || 0;
+    const latestCost = Number(latestFinance?.cost) || 0;
+
+    const topLine = (productLines?.data || []).reduce((max, item) => (Number(item?.revenue || 0) > Number(max?.revenue || 0) ? item : max), null);
+    const topChannel = (salesChannels?.data || []).reduce((max, item) => (Number(item?.value || item?.revenue || 0) > Number(max?.value || max?.revenue || 0) ? item : max), null);
+    const topQuantity = (salesQuantity?.data || []).reduce((max, item) => (Number(item?.value || item?.quantity || item?.count || 0) > Number(max?.value || max?.quantity || max?.count || 0) ? item : max), null);
+    const topPerformer = (topPerformersHeatmap?.data || [])[0] || null;
+
+    const currencyText = (value) => {
+        const { value: v, unit } = formatCurrency(value);
+        return `${v} ${unit}`;
+    };
+
+    const triggerAssistantPrompt = (title, valueText) => {
+        const prompt = `Mình đang xem dashboard BeeBox, mục "${title}": ${valueText}. Hãy phân tích về vấn đề này.`;
+        setAssistantOpen(true);
+        setChatInput(prompt);
+        // đợi panel mở rồi gửi
+        setTimeout(() => {
+            sendMessage(prompt, { meta: { fromDashboard: true } });
+            chatEndRef.current?.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+        }, 120);
+    };
+
+    useEffect(() => {
+        const handler = (e) => {
+            const { title, text } = e.detail || {};
+            if (!title || !text) return;
+            triggerAssistantPrompt(title, text);
+        };
+        window.addEventListener('bb-insight', handler);
+        return () => window.removeEventListener('bb-insight', handler);
+    }, []);
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -207,10 +250,11 @@ function App() {
             .filter(Boolean);
     };
 
-    const handleSendMessage = async () => {
-        const text = chatInput.trim();
+    const sendMessage = async (overrideText, options = {}) => {
+        const meta = options.meta || {};
+        const text = (overrideText ?? chatInput).trim();
         if (!text || isSending) return;
-        const userMsg = { id: Date.now(), from: 'user', type: 'text', text };
+        const userMsg = { id: Date.now(), from: 'user', type: 'text', text, ...meta };
         setChatMessages((prev) => [...prev, userMsg]);
         setChatInput('');
         setIsSending(true);
@@ -406,7 +450,15 @@ function App() {
                             </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
+                            <div
+                                className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md metric-click"
+                                onClick={() =>
+                                    triggerAssistantPrompt(
+                                        'KPI tháng',
+                                        `Tháng ${currentMonth.month}: thực đạt ${currencyText(currentMonth.actual)}, mục tiêu ${currencyText(currentMonth.target)}, hoàn thành ${kpiCompletion}%`
+                                    )
+                                }
+                            >
                                 <p className="text-[10px] text-emerald-400 uppercase tracking-[0.12em]">KPI tháng</p>
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-2xl font-bold text-white">{formatCurrency(currentMonth.actual).value}</span>
@@ -416,7 +468,15 @@ function App() {
                                 <p className="text-[11px] text-slate-400">Mục tiêu: {formatCurrency(currentMonth.target).value} {formatCurrency(currentMonth.target).unit}</p>
                             </div>
 
-                            <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
+                            <div
+                                className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md metric-click"
+                                onClick={() =>
+                                    triggerAssistantPrompt(
+                                        'Pipeline',
+                                        `Tổng ${totalPipeline} lead/khách hàng, giai đoạn nóng ${hottestStage.label} (${hottestStage.count} hồ sơ)`
+                                    )
+                                }
+                            >
                                 <p className="text-[10px] text-cyan-300 uppercase tracking-[0.12em]">Pipeline</p>
                                 <div className="flex items-baseline gap-2">
                                     <span className="text-2xl font-bold text-white">{totalPipeline}</span>
@@ -425,7 +485,15 @@ function App() {
                                 <p className="text-[11px] text-slate-400">Giai đoạn nóng: {hottestStage.label}</p>
                             </div>
 
-                            <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
+                            <div
+                                className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md metric-click"
+                                onClick={() =>
+                                    triggerAssistantPrompt(
+                                        'Giai đoạn đỉnh',
+                                        `${hottestStage.label}: ${hottestStage.count} hồ sơ đang chờ xử lý`
+                                    )
+                                }
+                            >
                                 <p className="text-[10px] text-purple-300 uppercase tracking-[0.12em]">Giai đoạn đỉnh</p>
                                 <div className="flex items-center gap-2">
                                     <span
@@ -441,7 +509,15 @@ function App() {
                                 <p className="text-[11px] text-slate-400">Ưu tiên xử lý trước</p>
                             </div>
 
-                            <div className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md">
+                            <div
+                                className="glass rounded-xl p-3 border border-white/10 backdrop-blur-md metric-click"
+                                onClick={() =>
+                                    triggerAssistantPrompt(
+                                        'Trạng thái vận hành',
+                                        'Sẵn sàng hành động, nguồn lực đầy đủ'
+                                    )
+                                }
+                            >
                                 <p className="text-[10px] text-emerald-300 uppercase tracking-[0.12em]">Trạng thái</p>
                                 <div className="flex items-center gap-2">
                                     <span className="h-2 w-2 rounded-full bg-emerald-400" />
@@ -452,10 +528,10 @@ function App() {
                         </div>
 
                         <div className="grid grid-cols-12 auto-rows-[minmax(220px,auto)] gap-3 flex-1">
-                            <div className="col-span-12 lg:col-span-4 min-w-0">
+                            <div className="col-span-12 lg:col-span-4 min-w-0 chart-click">
                                 <PYPPerformance />
                             </div>
-                            <div className="col-span-12 lg:col-span-8 min-w-0">
+                            <div className="col-span-12 lg:col-span-8 min-w-0 chart-click">
                                 <SalesPipeline />
                             </div>
                         </div>
@@ -473,14 +549,14 @@ function App() {
                             </div>
                         </div>
                         <div className="grid grid-cols-12 auto-rows-[minmax(260px,auto)] gap-3 flex-1">
-                            <div className="col-span-12 xl:col-span-8 min-w-0">
+                            <div className="col-span-12 xl:col-span-8 min-w-0 chart-click">
                                 <DoanhThuSanPham />
                             </div>
                             <div className="col-span-12 xl:col-span-4 min-w-0 grid grid-rows-2 gap-3 auto-rows-[minmax(180px,auto)]">
-                                <div className="min-h-[200px]">
+                                <div className="min-h-[200px] chart-click">
                                     <SoLuongBan key={`so-luong-${chartRerender}`} />
                                 </div>
-                                <div className="min-h-[180px]">
+                                <div className="min-h-[180px] chart-click">
                                     <KenhBanHang />
                                 </div>
                             </div>
@@ -499,16 +575,16 @@ function App() {
                             </div>
                         </div>
                         <div className="grid grid-cols-12 auto-rows-[minmax(240px,auto)] gap-3 flex-1">
-                            <div className="col-span-12 md:col-span-6 xl:col-span-6 min-w-0">
+                            <div className="col-span-12 md:col-span-6 xl:col-span-6 min-w-0 chart-click">
                                 <ChienBinhSales />
                             </div>
-                            <div className="col-span-12 md:col-span-6 xl:col-span-6 min-w-0">
+                            <div className="col-span-12 md:col-span-6 xl:col-span-6 min-w-0 chart-click">
                                 <TopPerformersHeatmap />
                             </div>
-                            <div className="col-span-12 lg:col-span-6 min-w-0">
+                            <div className="col-span-12 lg:col-span-6 min-w-0 chart-click">
                                 <HieuSuatTaiChinh />
                             </div>
-                            <div className="col-span-12 lg:col-span-6 min-w-0">
+                            <div className="col-span-12 lg:col-span-6 min-w-0 chart-click">
                                 <LoiNhuanRong />
                             </div>
                         </div>
@@ -553,7 +629,7 @@ function App() {
                     <div className="assistant-chat">
                         <div className="assistant-messages" onWheel={stopScrollBubble}>
                             {chatMessages.map((msg) => {
-                                const bubbleClass = `chat-bubble ${msg.from === 'bot' ? 'chat-bubble--bot' : 'chat-bubble--user'} ${msg.type !== 'text' ? 'chat-bubble--media' : ''}`;
+                                const bubbleClass = `chat-bubble ${msg.from === 'bot' ? 'chat-bubble--bot' : 'chat-bubble--user'} ${msg.type !== 'text' ? 'chat-bubble--media' : ''} ${msg.fromDashboard ? 'chat-bubble--dash' : ''}`;
                                 return (
                                     <div key={msg.id} className={`chat-row ${msg.from === 'bot' ? 'chat-row--bot' : 'chat-row--user'}`}>
                                         <div className={bubbleClass}>
@@ -647,11 +723,11 @@ function App() {
                                 placeholder="Hỏi BeeBox về KPI, pipeline, nhân sự..."
                                 value={chatInput}
                                 onChange={(e) => setChatInput(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                                 disabled={isSending}
                                 className={suggestLoading ? 'glow-input' : ''}
                             />
-                            <button className="assistant-send" onClick={handleSendMessage} aria-label="Gửi" disabled={isSending}>
+                            <button className="assistant-send" onClick={() => sendMessage()} aria-label="Gửi" disabled={isSending}>
                                 ➤
                             </button>
                         </div>

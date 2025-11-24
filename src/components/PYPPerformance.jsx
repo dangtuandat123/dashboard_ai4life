@@ -17,6 +17,10 @@ const PYPPerformance = () => {
         ? Math.round((currentMonth.actual / currentMonth.target) * 100)
         : 0;
 
+    const firePrompt = (title, text) => {
+        window.dispatchEvent(new CustomEvent('bb-insight', { detail: { title, text } }));
+    };
+
     return (
         <div className="glass rounded-xl p-3 h-full flex flex-col border border-white/10 backdrop-blur-md">
             <div className="flex items-center justify-between mb-3">
@@ -115,7 +119,17 @@ const PYPPerformance = () => {
                                 return null;
                             }}
                         />
-                        <Bar dataKey="actual" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                        <Bar
+                            dataKey="actual"
+                            radius={[4, 4, 0, 0]}
+                            maxBarSize={40}
+                            onClick={(data) =>
+                                firePrompt(
+                                    'Hiệu suất KPI',
+                                    `Tháng ${data.payload.month}: thực đạt ${formatVietnameseNumber(data.payload.actual)}, mục tiêu ${formatVietnameseNumber(data.payload.target)}`
+                                )
+                            }
+                        >
                             {pypPerformanceData.map((entry, index) => (
                                 <Cell
                                     key={`cell-${index}`}
