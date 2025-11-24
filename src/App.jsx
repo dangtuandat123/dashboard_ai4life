@@ -27,7 +27,14 @@ function App() {
     const [chartRerender, setChartRerender] = useState(0);
     const [showGreeting, setShowGreeting] = useState(false);
     const [chatInput, setChatInput] = useState('');
-    const [chatMessages, setChatMessages] = useState([]);
+    const [chatMessages, setChatMessages] = useState([
+        {
+            id: 1,
+            from: 'bot',
+            type: 'text',
+            text: 'Chào bạn! Tôi là BeeBox AI, sẵn sàng hỗ trợ phân tích KPI, pipeline và báo cáo.'
+        }
+    ]);
     const [isSending, setIsSending] = useState(false);
     const [chartHeights, setChartHeights] = useState({});
     const [autoSuggestions, setAutoSuggestions] = useState([]);
@@ -148,16 +155,6 @@ function App() {
             chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [assistantOpen, chatMessages]);
-
-    useEffect(() => {
-        if (chatMessages.length === 0) {
-            setChatMessages([
-                { id: 1, from: 'bot', type: 'text', text: 'Xin chào, tôi là BeeBox AI! Tôi có thể giúp tóm tắt KPI và gợi ý ưu tiên.' },
-                { id: 2, from: 'user', type: 'text', text: 'Hãy cho tôi biết tình hình KPI tháng này.' },
-                { id: 3, from: 'bot', type: 'text', text: `Bạn đã đạt ${kpiCompletion}% KPI tháng ${currentMonth.month}. Nên đẩy mạnh giai đoạn ${hottestStage.label} (${hottestStage.count} hồ sơ).` }
-            ]);
-        }
-    }, [chatMessages.length, kpiCompletion, currentMonth.month, hottestStage.label, hottestStage.count]);
 
     const stripChartStyle = (html = '') => html.replace(/<style[\s\S]*?<\/style>/gi, '');
     const injectChartStyle = (html = '') => {
@@ -613,14 +610,21 @@ function App() {
                                 ➤
                             </button>
                         </div>
+                        {isSending && (
+                            <div className="ai-thinking ai-thinking--send">
+                                <span className="spark" />
+                                <span className="spark" />
+                                <span className="spark" />
+                                <span>BeeBox đang suy luận...</span>
+                            </div>
+                        )}
                         <div className={`assistant-suggestions ${suggestLoading || autoSuggestions.length > 0 ? 'is-visible' : ''}`}>
                             {suggestLoading && (
-                                <div className="suggest-loading">
-                                    <span className="bulb">💡</span>
-                                    <span className="dot-pulse" />
-                                    <span className="dot-pulse" />
-                                    <span className="dot-pulse" />
-                                    <span className="ml-1">Đang gợi ý...</span>
+                                <div className="ai-thinking">
+                                    <span className="spark" />
+                                    <span className="spark" />
+                                    <span className="spark" />
+                                    <span>BeeBox đang gợi ý...</span>
                                 </div>
                             )}
                             {!suggestLoading && autoSuggestions.map((suggestion, idx) => (
