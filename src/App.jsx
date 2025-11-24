@@ -132,11 +132,16 @@ function App() {
     .chart-container { position: relative; width: 100%; height: 100vh; }
     canvas { width: 100% !important; height: 100% !important; }
     </style>`;
-        if (!html) return style;
-        if (html.includes('</head>')) {
-            return html.replace('</head>', `${style}</head>`);
+        const cleaned = stripChartStyle(html || '');
+        const hasHead = /<\/head>/i.test(cleaned);
+        const hasBody = /<\/body>/i.test(cleaned);
+        if (hasHead) {
+            return cleaned.replace(/<\/head>/i, `${style}</head>`);
         }
-        return `${style}${html}`;
+        if (hasBody) {
+            return cleaned.replace(/<body[^>]*>/i, (m) => `${m}${style}`);
+        }
+        return `<html><head>${style}</head><body>${cleaned}</body></html>`;
     };
 
     const parseWebhookPayload = (raw) => {
@@ -202,7 +207,7 @@ function App() {
             try {
                 const doc = iframe.contentWindow?.document;
                 if (!doc) return;
-                const container = doc.querySelector('.chart-container') || doc.body;
+                const container = doc.querySelector('.chart-container') || doc.body || doc.documentElement;
                 const rect = container?.getBoundingClientRect();
                 const containerHeight = rect?.height || container?.scrollHeight || 0;
                 const contentHeight = Math.max(containerHeight, 200);
