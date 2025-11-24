@@ -27,7 +27,7 @@ const LoiNhuanRong = () => {
         <div className="glass rounded-xl p-3 h-full flex flex-col border border-white/10 backdrop-blur-md">
             <div className="flex items-center justify-between mb-3">
                 <div>
-                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Profitability</p>
+                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Khả năng sinh lời</p>
                     <h3 className="text-sm font-semibold text-white">Lợi nhuận ròng</h3>
                     <p className="text-[10px] text-slate-400">Lợi nhuận & Tăng trưởng</p>
                 </div>

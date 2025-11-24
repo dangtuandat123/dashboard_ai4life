@@ -21,7 +21,7 @@ const PYPPerformance = () => {
         <div className="glass rounded-xl p-3 h-full flex flex-col border border-white/10 backdrop-blur-md">
             <div className="flex items-center justify-between mb-3">
                 <div>
-                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.08em]">PYP performance</p>
+                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.08em]">Hiệu suất PYP</p>
                     <h3 className="text-sm font-semibold text-white">Hiệu suất theo tháng</h3>
                     <p className="text-[10px] text-slate-400">Thực đạt vs Mục tiêu</p>
                 </div>
@@ -93,7 +93,7 @@ const PYPPerformance = () => {
                                     const data = payload[0].payload;
                                     const pct = data.target > 0 ? Math.round((data.actual / data.target) * 100) : 0;
                                     return (
-                                        <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700 p-2 rounded-lg shadow-xl">
+                                        <div className="tooltip-card p-2 rounded-lg shadow-xl">
                                             <p className="text-xs font-bold text-white mb-1">Tháng {label}</p>
                                             <div className="space-y-0.5">
                                                 <div className="flex justify-between gap-4 text-[10px]">

@@ -90,15 +90,15 @@ const SalesPipeline = () => {
             {/* Header */}
             <div className="mb-4 flex items-center justify-between gap-2 relative z-10">
                 <div>
-                    <p className="text-xs text-emerald-400 uppercase tracking-[0.15em] font-bold">Pipeline</p>
-                    <h3 className="text-lg font-bold text-white mt-1">Sales Pipeline</h3>
+                    <p className="text-xs text-emerald-400 uppercase tracking-[0.15em] font-bold">Phễu bán hàng</p>
+                    <h3 className="text-lg font-bold text-white mt-1">Hành trình chuyển đổi</h3>
                 </div>
                 <div className="flex items-center gap-3 text-xs">
                     <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300">
-                        Total: <span className="text-white font-bold text-sm">{total}</span>
+                        Tổng: <span className="text-white font-bold text-sm">{total}</span>
                     </div>
                     <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                        Conv: <span className="font-bold text-sm">{conversion}%</span>
+                        Chuyển đổi: <span className="font-bold text-sm">{conversion}%</span>
                     </div>
                 </div>
             </div>
@@ -232,7 +232,7 @@ const SalesPipeline = () => {
                                     </p>
                                     {isActive && (
                                         <div className="text-[11px] text-white font-bold bg-slate-800/90 px-3 py-1 rounded-full inline-block backdrop-blur border border-white/10">
-                                            {Math.round((pt.data.count / points[0].data.count) * 100)}% retained
+                                            {Math.round((pt.data.count / points[0].data.count) * 100)}% giữ lại
                                         </div>
                                     )}
                                 </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { ArrowUp, Moon, Sparkles, Sun } from 'lucide-react';
 import { useDashboardData } from './data/mockData.jsx';
 import PYPPerformance from './components/PYPPerformance';
 import SalesPipeline from './components/SalesPipeline';
@@ -11,8 +12,19 @@ import SoLuongBan from './components/SoLuongBan';
 import LoiNhuanRong from './components/LoiNhuanRong';
 
 function App() {
+    const [theme, setTheme] = useState(() => {
+        if (typeof window === 'undefined') return 'dark';
+        const stored = localStorage.getItem('bb-theme');
+        if (stored === 'light' || stored === 'dark') return stored;
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const resolvedTheme = prefersDark ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', resolvedTheme);
+        return resolvedTheme;
+    });
     const [activeSection, setActiveSection] = useState('perf');
     const [showScrollTop, setShowScrollTop] = useState(false);
+    const isDark = theme === 'dark';
+    const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
 
     // Format currency: >= 1 tỷ -> tỷ, else triệu
     const formatCurrency = (value) => {
@@ -43,6 +55,11 @@ function App() {
     const financeRef = useRef(null);
 
     const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('bb-theme', theme);
+    }, [theme]);
 
     const scrollToSection = (ref, alignBottom = false, forceCenter = false) => {
         if (!ref?.current) return;
@@ -98,52 +115,70 @@ function App() {
                         key={item.key}
                         onClick={() => scrollToSection(item.ref, item.alignBottom, item.forceCenter)}
                         aria-label={`Đi tới ${item.label}`}
-                        className={`px-3 py-2 rounded-lg border text-xs font-semibold transition shadow-[0_10px_30px_rgba(0,0,0,0.25)] backdrop-blur-md ${activeSection === item.key
-                            ? 'bg-cyan-500/30 border-cyan-300 text-white'
-                            : 'bg-white/10 border-white/20 text-white hover:bg-cyan-500/20 hover:border-cyan-400/60'
-                            }`}
+                        className={`nav-chip ${activeSection === item.key ? 'nav-chip--active' : ''}`}
                     >
+                        <span className="nav-chip__dot" />
                         {item.label}
                     </button>
                 ))}
             </div>
-
             <div className="relative max-w-6xl xl:max-w-7xl mx-auto px-4 lg:px-6 py-6 lg:py-8">
                 <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute -left-24 -top-24 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl" />
-                    <div className="absolute right-0 top-10 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.06),transparent_30%),radial-gradient(circle_at_80%_10%,rgba(236,72,153,0.06),transparent_25%),radial-gradient(circle_at_60%_80%,rgba(59,130,246,0.06),transparent_25%)]" />
+                    <div className="aurora-blur" />
+                    <div className="grid-overlay" />
                 </div>
 
                 {/* Header */}
                 <div className="relative flex flex-wrap items-start justify-between gap-4 mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-500 flex items-center justify-center shadow-[0_10px_30px_rgba(59,130,246,0.35)]">
-                            <span className="text-white text-xl font-black tracking-tight">BB</span>
+                        <div className="logo-mark">
+                            <span className="logo-text">BB</span>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-white leading-tight">BeeBox Intelligence</h1>
-                            <p className="text-sm text-slate-400">Dashboard doanh thu & pipeline thời gian thực</p>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-2xl font-bold text-white leading-tight">BeeBox Intelligence</h1>
+                                <span className="live-pill">
+                                    <span className="pill-dot" />
+                                    Thời gian thực
+                                </span>
+                            </div>
+                            <p className="text-sm text-slate-400">Dashboard doanh thu & phễu bán hàng thời gian thực</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md text-xs text-slate-200 flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.8)]" />
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                        <div className="frosted-pill">
+                            <span className="status-dot" />
                             Tháng {currentMonth.month}, {new Date().getFullYear()}
                         </div>
-                        <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 via-emerald-500 to-lime-500 text-xs font-semibold text-slate-900 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-400/40 transition">
+                        <button
+                            onClick={toggleTheme}
+                            className="theme-toggle"
+                            aria-label="Chuyển chế độ sáng tối"
+                        >
+                            <span className="icon-pill">
+                                {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                            </span>
+                            <div className="leading-tight text-left">
+                                <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Giao diện</p>
+                                <p className="text-xs font-semibold text-white">{isDark ? 'Chế độ tối' : 'Chế độ sáng'}</p>
+                            </div>
+                        </button>
+                        <button className="primary-action">
+                            <Sparkles className="w-4 h-4" />
                             Xuất báo cáo
                         </button>
                     </div>
                 </div>
-
                 <div className="relative space-y-8">
                     {/* Section: Hiệu suất & Pipeline */}
-                    <div ref={perfRef} className="space-y-3 min-h-[70vh] md:min-h-[85vh] flex flex-col scroll-mt-[140px] md:scroll-mt-[160px]">
-                        <div className="flex items-center justify-between">
+                    <div ref={perfRef} className="section-shell space-y-3 min-h-[70vh] md:min-h-[85vh] flex flex-col scroll-mt-[140px] md:scroll-mt-[160px]">
+                        <div className="section-head">
                             <div>
-                                <p className="text-[10px] text-emerald-300 uppercase tracking-[0.14em]">Hiệu suất & pipeline</p>
-                                <h2 className="text-lg font-semibold text-white">Theo dõi KPI và luồng bán hàng</h2>
+                                <p className="section-kicker">Hiệu suất & pipeline</p>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="section-title">Theo dõi KPI và luồng bán hàng</h2>
+                                    <div className="section-underline" />
+                                </div>
                             </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -203,11 +238,14 @@ function App() {
                     </div>
 
                     {/* Section: Sản phẩm & sản lượng */}
-                    <div ref={productRef} className="space-y-3 min-h-[70vh] md:min-h-[85vh] flex flex-col scroll-mt-[140px] md:scroll-mt-[160px]">
-                        <div className="flex items-center justify-between">
+                    <div ref={productRef} className="section-shell space-y-3 min-h-[70vh] md:min-h-[85vh] flex flex-col scroll-mt-[140px] md:scroll-mt-[160px]">
+                        <div className="section-head">
                             <div>
-                                <p className="text-[10px] text-emerald-300 uppercase tracking-[0.14em]">Sản phẩm & sản lượng</p>
-                                <h2 className="text-lg font-semibold text-white">Doanh thu theo dòng và số lượng bán</h2>
+                                <p className="section-kicker">Sản phẩm & sản lượng</p>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="section-title">Doanh thu theo dòng và số lượng bán</h2>
+                                    <div className="section-underline" />
+                                </div>
                             </div>
                         </div>
                         <div className="grid grid-cols-12 auto-rows-[minmax(260px,auto)] gap-3 flex-1">
@@ -226,11 +264,14 @@ function App() {
                     </div>
 
                     {/* Section: Nhân sự & tài chính */}
-                    <div ref={financeRef} className="space-y-3 min-h-[70vh] md:min-h-[85vh] flex flex-col scroll-mt-[140px] md:scroll-mt-[160px]">
-                        <div className="flex items-center justify-between">
+                    <div ref={financeRef} className="section-shell space-y-3 min-h-[70vh] md:min-h-[85vh] flex flex-col scroll-mt-[140px] md:scroll-mt-[160px]">
+                        <div className="section-head">
                             <div>
-                                <p className="text-[10px] text-emerald-300 uppercase tracking-[0.14em]">Nhân sự & tài chính</p>
-                                <h2 className="text-lg font-semibold text-white">Chiến binh dẫn đầu, hiệu suất và tài chính</h2>
+                                <p className="section-kicker">Nhân sự & tài chính</p>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="section-title">Chiến binh dẫn đầu, hiệu suất và tài chính</h2>
+                                    <div className="section-underline" />
+                                </div>
                             </div>
                         </div>
                         <div className="grid grid-cols-12 auto-rows-[minmax(240px,auto)] gap-3 flex-1">
@@ -254,10 +295,10 @@ function App() {
             {showScrollTop && (
                 <button
                     onClick={() => window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' })}
-                    className="fixed right-3 bottom-4 lg:right-6 lg:bottom-6 px-3 py-2 rounded-full bg-white/15 border border-white/25 text-xs font-semibold text-white hover:bg-cyan-500/30 hover:border-cyan-300 transition shadow-[0_10px_30px_rgba(0,0,0,0.3)] backdrop-blur-md z-30"
+                    className="scroll-top"
                     aria-label="Lên đầu trang"
                 >
-                    Lên đầu
+                    <ArrowUp className="w-4 h-4" />
                 </button>
             )}
         </div>

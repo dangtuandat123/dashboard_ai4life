@@ -17,8 +17,8 @@ const KenhBanHang = () => {
                     <Share2 className="w-3.5 h-3.5 text-indigo-300" />
                 </div>
                 <div>
-                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.12em]">Channels</p>
-                    <h3 className="text-sm font-semibold text-white">Số lượng theo kênh</h3>
+                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.12em]">Kênh bán hàng</p>
+                    <h3 className="text-sm font-semibold text-white">Tỷ trọng theo kênh</h3>
                 </div>
             </div>
 

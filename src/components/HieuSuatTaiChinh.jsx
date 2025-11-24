@@ -12,7 +12,7 @@ const HieuSuatTaiChinh = () => {
         <div className="glass rounded-xl p-3 h-full min-h-[220px] flex flex-col border border-white/10 backdrop-blur-md">
             <div className="mb-2 flex items-center justify-between">
                 <div>
-                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Financials</p>
+                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Tài chính</p>
                     <h3 className="text-sm font-semibold text-white">Hiệu suất tài chính</h3>
                     <p className="text-[10px] text-slate-400">Chi phí vs Doanh thu</p>
                 </div>
@@ -52,13 +52,13 @@ const HieuSuatTaiChinh = () => {
                         <Tooltip
                             formatter={(value) => formatVietnameseNumber(value)}
                             contentStyle={{
-                                backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                                border: '1px solid rgba(255,255,255,0.2)',
+                                backgroundColor: 'var(--tooltip-bg)',
+                                border: `1px solid var(--tooltip-border)`,
                                 borderRadius: '8px',
                                 fontSize: '13px',
-                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)'
+                                boxShadow: '0 12px 30px rgba(0, 0, 0, 0.2)'
                             }}
-                            itemStyle={{ padding: '2px 0' }}
+                            itemStyle={{ padding: '2px 0', color: 'var(--text-strong)' }}
                         />
                         <Legend
                             wrapperStyle={{ paddingTop: '10px' }}

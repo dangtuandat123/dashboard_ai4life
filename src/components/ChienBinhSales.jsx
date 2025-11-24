@@ -51,8 +51,8 @@ const ChienBinhSales = () => {
                     <Trophy className="w-3.5 h-3.5 text-yellow-300" />
                 </div>
                 <div>
-                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.12em]">Top sales</p>
-                    <h3 className="text-sm font-semibold text-white">Wall of Fame</h3>
+                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.12em]">Bảng xếp hạng doanh số</p>
+                    <h3 className="text-sm font-semibold text-white">Bảng vàng vinh danh</h3>
                 </div>
             </div>
 
@@ -78,7 +78,7 @@ const ChienBinhSales = () => {
                                     {performer.name}
                                     {style.icon && <span className="opacity-80">{style.icon}</span>}
                                 </div>
-                                <div className={`text-[10px] ${style.text} font-medium`}>Top #{performer.rank}</div>
+                                <div className={`text-[10px] ${style.text} font-medium`}>Hạng #{performer.rank}</div>
                             </div>
                             <div className="text-right flex-shrink-0">
                                 <div className={`text-sm font-bold ${performer.rank === 1 ? 'text-yellow-300' : 'text-white'}`}>

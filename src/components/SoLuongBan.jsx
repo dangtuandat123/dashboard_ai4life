@@ -121,7 +121,7 @@ const SoLuongBan = () => {
         if (active && payload && payload.length) {
             const data = payload[0].payload;
             return (
-                <div className="bg-slate-900/95 backdrop-blur-sm border border-slate-700 rounded-lg p-3 shadow-xl">
+                <div className="tooltip-card rounded-lg p-3 shadow-xl">
                     <p className="text-sm font-bold text-white mb-2">{data.name}</p>
                     <div className="space-y-1">
                         <p className="text-xs text-slate-300">
@@ -143,9 +143,9 @@ const SoLuongBan = () => {
     return (
         <div className="glass rounded-xl p-3 h-full flex flex-col border border-white/10 backdrop-blur-md">
             <div className="mb-2">
-                <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Quantity</p>
+                <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Số lượng</p>
                 <h3 className="text-sm font-semibold text-white">Số lượng bán</h3>
-                <p className="text-[10px] text-slate-400">TOP5 - Phân bổ theo loại sản phẩm</p>
+                <p className="text-[10px] text-slate-400">5 dòng bán chạy nhất theo loại sản phẩm</p>
             </div>
 
             <div className="flex-1 min-h-0">

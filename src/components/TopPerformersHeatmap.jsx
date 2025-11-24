@@ -41,13 +41,13 @@ const TopPerformersHeatmap = () => {
         <div className="glass rounded-xl p-3 h-full w-full min-w-0 flex flex-col border border-white/10 backdrop-blur-md">
             <div className="flex items-center justify-between mb-3">
                 <div>
-                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Top performers</p>
-                    <h3 className="text-sm font-semibold text-white">Heatmap hiệu suất</h3>
-                    <p className="text-[10px] text-slate-400">Nhận vốn · Hoạt động · Doanh thu</p>
+                    <p className="text-[10px] text-emerald-400 uppercase tracking-[0.1em]">Nhân viên nổi bật</p>
+                    <h3 className="text-sm font-semibold text-white">Bản đồ nhiệt hiệu suất</h3>
+                    <p className="text-[10px] text-slate-400">Nhân viên · Hoạt động · Doanh thu</p>
                 </div>
                 <div className="text-[9px] text-slate-400 text-right">
                     <div>Đậm màu = hiệu suất cao</div>
-                    <div>Nhẹ màu = cần tập trung</div>
+                    <div>Màu nhạt = cần tập trung</div>
                 </div>
             </div>
 
