@@ -75,6 +75,12 @@ const SoLuongBan = () => {
             <g
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
+                onClick={() =>
+                    firePrompt(
+                        'Số lượng bán',
+                        `${name}: ${formatVietnameseNumber(sold)} / mục tiêu ${formatVietnameseNumber(target)} (${percentage}%)`
+                    )
+                }
                 style={{ cursor: 'pointer' }}
             >
                 <defs>

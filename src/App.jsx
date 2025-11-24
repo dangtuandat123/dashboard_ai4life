@@ -553,15 +553,7 @@ function App() {
                                 <DoanhThuSanPham />
                             </div>
                             <div className="col-span-12 xl:col-span-4 min-w-0 grid grid-rows-2 gap-3 auto-rows-[minmax(180px,auto)]">
-                                <div
-                                    className="min-h-[200px] chart-click"
-                                    onClick={() =>
-                                        triggerAssistantPrompt(
-                                            'Số lượng bán',
-                                            `Mình vừa xem treemap số lượng bán: mục top ${topQuantity?.name || topQuantity?.product || 'N/A'} đạt ${Number(topQuantity?.value || topQuantity?.quantity || topQuantity?.count || 0)} quyền lợi. Hãy phân tích ô mình bấm và phân bố toàn bộ.`
-                                        )
-                                    }
-                                >
+                                <div className="min-h-[200px] chart-click">
                                     <SoLuongBan key={`so-luong-${chartRerender}`} />
                                 </div>
                                 <div className="min-h-[180px] chart-click">
