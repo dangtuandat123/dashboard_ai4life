@@ -36,6 +36,7 @@ function App() {
     const [chatMessages, setChatMessages] = useState([makeGreeting()]);
     const [isSending, setIsSending] = useState(false);
     const [sendTimer, setSendTimer] = useState(0);
+    const [chatMode, setChatMode] = useState('nhanh'); // 'nhanh' | 'suy_luan'
     const [chartHeights, setChartHeights] = useState({});
     const [autoSuggestions, setAutoSuggestions] = useState([]);
     const [suggestLoading, setSuggestLoading] = useState(false);
@@ -271,7 +272,7 @@ function App() {
             const resp = await fetch('https://chatgpt.id.vn/webhook/bb17371c-6a34-421e-b659-75aa42041122', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({ message: text, mode: chatMode })
             });
             const raw = await resp.text();
             const mapped = parseWebhookPayload(raw);
@@ -738,6 +739,16 @@ function App() {
                             ))}
                         </div>
                         <div className="assistant-input">
+                            <label className="mode-select">
+                                <select
+                                    value={chatMode}
+                                    onChange={(e) => setChatMode(e.target.value)}
+                                    aria-label="Chọn chế độ trả lời"
+                                >
+                                    <option value="nhanh">Nhanh</option>
+                                    <option value="suy_luan">Suy luận</option>
+                                </select>
+                            </label>
                             <input
                                 type="text"
                                 placeholder="Hỏi BeeBox về KPI, pipeline, nhân sự..."
