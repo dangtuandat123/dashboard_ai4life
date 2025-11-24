@@ -94,7 +94,7 @@ function App() {
     useEffect(() => {
         if (chatMessages.length === 0) {
             setChatMessages([
-                { id: 1, from: 'bot', text: 'Xin chào, tôi là Gemini BeeBox! Tôi có thể giúp tóm tắt KPI và gợi ý ưu tiên.' },
+                { id: 1, from: 'bot', text: 'Xin chào, tôi là BeeBox AI! Tôi có thể giúp tóm tắt KPI và gợi ý ưu tiên.' },
                 { id: 2, from: 'user', text: 'Hãy cho tôi biết tình hình KPI tháng này.' },
                 { id: 3, from: 'bot', text: `Bạn đã đạt ${kpiCompletion}% KPI tháng ${currentMonth.month}. Nên đẩy mạnh giai đoạn ${hottestStage.label} (${hottestStage.count} hồ sơ).` }
             ]);
@@ -374,7 +374,7 @@ function App() {
                 <div className="assistant-panel__header">
                     <div>
                         <p className="assistant-kicker">Trợ lý AI</p>
-                        <h3 className="assistant-title">Gemini for BeeBox</h3>
+                        <h3 className="assistant-title">BeeBox AI Assistant</h3>
                     </div>
                     <button className="assistant-close" onClick={() => setAssistantOpen(false)} aria-label="Đóng trợ lý">
                         <X className="w-4 h-4" />
@@ -409,7 +409,7 @@ function App() {
                         <div className="assistant-input">
                             <input
                                 type="text"
-                                placeholder="Hỏi Gemini về KPI, pipeline, nhân sự..."
+                                placeholder="Hỏi BeeBox về KPI, pipeline, nhân sự..."
                                 value={chatInput}
                                 onChange={(e) => setChatInput(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
