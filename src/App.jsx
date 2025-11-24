@@ -28,6 +28,7 @@ function App() {
     const [showGreeting, setShowGreeting] = useState(false);
     const [chatInput, setChatInput] = useState('');
     const [chatMessages, setChatMessages] = useState([]);
+    const [isSending, setIsSending] = useState(false);
     const chatEndRef = useRef(null);
     const isDark = theme === 'dark';
     const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -73,6 +74,28 @@ function App() {
         return () => clearTimeout(timer);
     }, []);
 
+    const renderMarkdown = (text) => {
+        if (!text) return '';
+        let html = text
+            .replace(/```([\s\S]*?)```/g, '<pre class="md-code">$1</pre>')
+            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        html = html.replace(/^(?:- |\* )(.*(?:\n(?:- |\* ).*)*)/gim, (match) => {
+            const items = match
+                .split(/\n/)
+                .map((line) => line.replace(/^(?:- |\* )/, '').trim())
+                .filter(Boolean)
+                .map((item) => `<li>${item}</li>`)
+                .join('');
+            return `<ul>${items}</ul>`;
+        });
+        html = html.replace(/\n\n/g, '<br/><br/>');
+        return html;
+    };
+
     // Force charts to recalc width when assistant panel toggles
     useEffect(() => {
         // Nudge responsive charts (Treemap) to recalc when layout shrinks
@@ -94,24 +117,64 @@ function App() {
     useEffect(() => {
         if (chatMessages.length === 0) {
             setChatMessages([
-                { id: 1, from: 'bot', text: 'Xin chào, tôi là BeeBox AI! Tôi có thể giúp tóm tắt KPI và gợi ý ưu tiên.' },
-                { id: 2, from: 'user', text: 'Hãy cho tôi biết tình hình KPI tháng này.' },
-                { id: 3, from: 'bot', text: `Bạn đã đạt ${kpiCompletion}% KPI tháng ${currentMonth.month}. Nên đẩy mạnh giai đoạn ${hottestStage.label} (${hottestStage.count} hồ sơ).` }
+                { id: 1, from: 'bot', type: 'text', text: 'Xin chào, tôi là BeeBox AI! Tôi có thể giúp tóm tắt KPI và gợi ý ưu tiên.' },
+                { id: 2, from: 'user', type: 'text', text: 'Hãy cho tôi biết tình hình KPI tháng này.' },
+                { id: 3, from: 'bot', type: 'text', text: `Bạn đã đạt ${kpiCompletion}% KPI tháng ${currentMonth.month}. Nên đẩy mạnh giai đoạn ${hottestStage.label} (${hottestStage.count} hồ sơ).` }
             ]);
         }
     }, [chatMessages.length, kpiCompletion, currentMonth.month, hottestStage.label, hottestStage.count]);
 
-    const handleSendMessage = () => {
+    const parseWebhookPayload = (raw) => {
+        let payload = raw;
+        try {
+            payload = JSON.parse(raw);
+        } catch {
+            try {
+                payload = JSON.parse(raw.trim().replace(/^"|"$/g, ''));
+            } catch {
+                payload = [];
+            }
+        }
+        if (!Array.isArray(payload)) return [];
+        return payload
+            .map((entry, idx) => {
+                const data = entry?.json || {};
+                if (!data.type) return null;
+                if (data.type === 'text') {
+                    return { id: Date.now() + idx, from: 'bot', type: 'text', text: data.data || '' };
+                }
+                if (data.type === 'chart') {
+                    return { id: Date.now() + idx, from: 'bot', type: 'chart', html: data.data || '' };
+                }
+                if (data.type === 'table') {
+                    return { id: Date.now() + idx, from: 'bot', type: 'table', columns: data.data?.columns || [], rows: data.data?.rows || [] };
+                }
+                return null;
+            })
+            .filter(Boolean);
+    };
+
+    const handleSendMessage = async () => {
         const text = chatInput.trim();
-        if (!text) return;
-        const userMsg = { id: Date.now(), from: 'user', text };
-        const botMsg = {
-            id: Date.now() + 1,
-            from: 'bot',
-            text: 'Tôi đã ghi nhận: "' + text + '". Bạn muốn tôi tóm tắt KPI hay pipeline không?'
-        };
-        setChatMessages((prev) => [...prev, userMsg, botMsg]);
+        if (!text || isSending) return;
+        const userMsg = { id: Date.now(), from: 'user', type: 'text', text };
+        setChatMessages((prev) => [...prev, userMsg]);
         setChatInput('');
+        setIsSending(true);
+        try {
+            const resp = await fetch('https://chatgpt.id.vn/webhook/bb17371c-6a34-421e-b659-75aa42041122', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            });
+            const raw = await resp.text();
+            const mapped = parseWebhookPayload(raw);
+            setChatMessages((prev) => [...prev, ...mapped]);
+        } catch (err) {
+            setChatMessages((prev) => [...prev, { id: Date.now(), from: 'bot', type: 'text', text: 'Xin lỗi, BeeBox AI gặp lỗi khi xử lý yêu cầu.' }]);
+        } finally {
+            setIsSending(false);
+        }
     };
 
     const stopScrollBubble = (e) => e.stopPropagation();
@@ -385,11 +448,35 @@ function App() {
                         <div className="assistant-messages" onWheel={stopScrollBubble}>
                             {chatMessages.map((msg) => (
                                 <div key={msg.id} className={`chat-row ${msg.from === 'bot' ? 'chat-row--bot' : 'chat-row--user'}`}>
-                                    <div className="chat-avatar">
-                                        {msg.from === 'bot' ? '🤖' : '🙋'}
-                                    </div>
                                     <div className={`chat-bubble ${msg.from === 'bot' ? 'chat-bubble--bot' : 'chat-bubble--user'}`}>
-                                        {msg.text}
+                                        {msg.type === 'text' && <div className="chat-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }} />}
+                                        {msg.type === 'chart' && (
+                                            <div className="chat-chart">
+                                                <iframe title={`chart-${msg.id}`} srcDoc={msg.html} sandbox="allow-scripts" />
+                                            </div>
+                                        )}
+                                        {msg.type === 'table' && (
+                                            <div className="chat-table">
+                                                <table>
+                                                    <thead>
+                                                        <tr>
+                                                            {msg.columns.map((col, idx) => (
+                                                                <th key={idx}>{col}</th>
+                                                            ))}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {msg.rows.map((row, rIdx) => (
+                                                            <tr key={rIdx}>
+                                                                {row.map((cell, cIdx) => (
+                                                                    <td key={cIdx}>{cell}</td>
+                                                                ))}
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -413,8 +500,9 @@ function App() {
                                 value={chatInput}
                                 onChange={(e) => setChatInput(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                                disabled={isSending}
                             />
-                            <button className="assistant-send" onClick={handleSendMessage} aria-label="Gửi">
+                            <button className="assistant-send" onClick={handleSendMessage} aria-label="Gửi" disabled={isSending}>
                                 ➤
                             </button>
                         </div>
