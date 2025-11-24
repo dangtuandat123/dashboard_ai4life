@@ -29,6 +29,7 @@ function App() {
     const [chatInput, setChatInput] = useState('');
     const [chatMessages, setChatMessages] = useState([]);
     const [isSending, setIsSending] = useState(false);
+    const [chartHeights, setChartHeights] = useState({});
     const chatEndRef = useRef(null);
     const isDark = theme === 'dark';
     const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -176,6 +177,18 @@ function App() {
             setChatMessages((prev) => [...prev, { id: Date.now(), from: 'bot', type: 'text', text: 'Xin lỗi, BeeBox AI gặp lỗi khi xử lý yêu cầu.' }]);
         } finally {
             setIsSending(false);
+        }
+    };
+
+    const handleChartLoad = (msgId, event) => {
+        const iframe = event.currentTarget;
+        try {
+            const doc = iframe.contentWindow?.document;
+            if (!doc) return;
+            const height = doc.documentElement.scrollHeight || doc.body.scrollHeight || 360;
+            setChartHeights((prev) => ({ ...prev, [msgId]: height }));
+        } catch {
+            // ignore cross-origin issues
         }
     };
 
@@ -456,7 +469,13 @@ function App() {
                                             {msg.type === 'text' && <div className="chat-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }} />}
                                             {msg.type === 'chart' && (
                                                 <div className="chat-chart">
-                                                    <iframe title={`chart-${msg.id}`} srcDoc={msg.html} sandbox="allow-scripts" />
+                                                    <iframe
+                                                        title={`chart-${msg.id}`}
+                                                        srcDoc={msg.html}
+                                                        sandbox="allow-scripts"
+                                                        style={{ height: chartHeights[msg.id] ? `${chartHeights[msg.id]}px` : '360px' }}
+                                                        onLoad={(e) => handleChartLoad(msg.id, e)}
+                                                    />
                                                 </div>
                                             )}
                                             {msg.type === 'table' && (
