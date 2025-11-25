@@ -719,6 +719,18 @@ function App() {
                                     </div>
                                 );
                             })}
+                            {isSending && (
+                                <div className="chat-row chat-row--bot thinking-inline">
+                                    <div className="ai-thinking ai-thinking--flash">
+                                        <span className="spark" />
+                                        <span className="spark" />
+                                        <span className="spark" />
+                                        <span className="bulb" aria-hidden="true">🧠</span>
+                                        <span>BeeBox đang suy luận...</span>
+                                        <span className="ai-thinking__timer">{sendTimer}s</span>
+                                    </div>
+                                </div>
+                            )}
                             <div ref={chatEndRef} />
                         </div>
                         <div className={`assistant-suggestions ${suggestLoading || autoSuggestions.length > 0 ? 'is-visible' : ''}`}>
@@ -765,16 +777,6 @@ function App() {
                                 ➤
                             </button>
                         </div>
-                        {isSending && (
-                            <div className="ai-thinking ai-thinking--send ai-thinking--rich">
-                                <span className="spark" />
-                                <span className="spark" />
-                                <span className="spark" />
-                                <span className="bulb" aria-hidden="true">🧠</span>
-                                <span>BeeBox đang suy luận...</span>
-                                <span className="ai-thinking__timer">{sendTimer}s</span>
-                            </div>
-                        )}
                     </div>
                 </div>
             </aside>
