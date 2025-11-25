@@ -235,16 +235,38 @@ function App() {
             payload = JSON.parse(raw);
         } catch {
             try {
-                payload = JSON.parse(raw.trim().replace(/^"|"$/g, ''));
+                // Try to clean up if it's a stringified JSON with extra quotes
+                payload = JSON.parse(raw.trim().replace(/^"|"$/g, '').replace(/\\"/g, '"'));
             } catch {
                 payload = [];
             }
         }
-        if (!Array.isArray(payload)) return [];
+
+        console.log('Webhook Raw:', raw);
+        console.log('Parsed Payload:', payload);
+
+        // Handle specific n8n output structure: { output: [...] }
+        if (payload && Array.isArray(payload.output)) {
+            payload = payload.output;
+        }
+
+        // Ensure payload is an array
+        if (!Array.isArray(payload)) {
+            // If it's a single object, wrap it in an array
+            if (typeof payload === 'object' && payload !== null) {
+                payload = [payload];
+            } else {
+                return [];
+            }
+        }
+
         return payload
             .map((entry, idx) => {
-                const data = entry?.json || {};
-                if (!data.type) return null;
+                // Support both n8n default structure ({json: ...}) and flat structure
+                const data = entry?.json || entry || {};
+
+                if (!data || !data.type) return null;
+
                 if (data.type === 'text') {
                     return { id: Date.now() + idx, from: 'bot', type: 'text', text: data.data || '' };
                 }

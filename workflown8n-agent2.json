@@ -1,0 +1,936 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User: {{ $('Webhook Intake').first().json.body.message }}\nSchema: {{ $json.schemaMarkdown }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Bạn là Output Classifier. Nhiệm vụ: phân loại yêu cầu thành {\\\"type_message\\\":[\\\"text\\\",...]}\nQuy tắc:\n- Luôn có \\\"text\\\".\n- Thêm \\\"table\\\" nếu yêu cầu bảng/danh sách/top/xếp hạng.\n- Thêm \\\"chart\\\" nếu yêu cầu biểu đồ/visualize/xu hướng/phân bố/so sánh thời gian.\nChỉ trả JSON, không giải thích. Ví dụ: {\\\"type_message\\\":[\\\"text\\\"]}."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -3248,
+        -496
+      ],
+      "id": "5d86e17f-2e0b-4e7a-8834-7ed8c53c6c64",
+      "name": "Agent Output Classifier"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\n  \"type\": \"object\",\n  \"additionalProperties\": false,\n  \"properties\": {\n    \"type_message\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\",\n        \"enum\": [\n          \"text\",\n          \"table\",\n          \"chart\"\n        ]\n      },\n      \"uniqueItems\": true,\n      \"minItems\": 1,\n      \"maxItems\": 3\n\n    }\n  },\n\n  \"required\": [\n    \"type_message\"\n  ]\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -3168,
+        -272
+      ],
+      "id": "86fad977-57de-4faa-9c29-918ab79ae0bb",
+      "name": "Parser Type Array"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        -2592,
+        -208
+      ],
+      "id": "6e68b1db-28df-4856-a274-b4b4e85085de",
+      "name": "Planner Scratchpad"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User: {{ $('Webhook Intake').first().json.body.message }}\nSchema: {{ $('JS Schema Markdown1').item.json.schemaMarkdown }}\nTypes: {{ $json.output.type_message }}\n",
+        "options": {
+          "systemMessage": "Bạn là Kiến trúc sư dữ liệu. Nhận user query + schema markdown.\nPhân loại EASY (1 bảng), MEDIUM (JOIN), HARD (subquery/window/nhiều bước).\nTrả JSON: {classification, relevant_tables:[...], plan:'các bước logic', thought_process:'vì sao chọn bảng/cột'}.\nLiệt kê bảng/cột liên quan và bộ lọc (thời gian, trạng thái) nếu có. Không viết SQL ở bước này."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -2736,
+        -496
+      ],
+      "id": "89b80531-8038-458f-9d9b-3507ff028284",
+      "name": "Agent Output Planner"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nlet allowedTypes = [];\ntry {\n  allowedTypes = $('Agent Output Classifier').first().json.output.type_message;\n  // Đảm bảo đây là một mảng\n  if (!Array.isArray(allowedTypes)) {\n    allowedTypes = [];\n  }\n} catch (e) {\n  console.log(\"Không tìm thấy dữ liệu 'type_message' từ Agent Output Classifier.\");\n  // Nếu lỗi, trả về cấu trúc rỗng\n  return { json: { type_message: [], plan: {} } };\n}\n\nlet allPlans = {};\ntry {\n  allPlans = $input.first().json.output;\n  if (typeof allPlans !== 'object' || allPlans === null) {\n    allPlans = {};\n  }\n} catch (e) {\n  console.log(\"Không tìm thấy dữ liệu 'output' (kế hoạch) từ $input.\");\n  return { json: { type_message: [], plan: {} } };\n}\n\nconst newOutput = {\n  type_message: allowedTypes,\n  plan:  $('Agent Output Planner').first().json.output,\n  sql_code: $('Agent Chart Builder2').first().json.output,\n  user_input: $('Webhook Intake').first().json.body.message,\n  result: $input.first().json.file.result\n};\n\nreturn { json: newOutput };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1552,
+        -496
+      ],
+      "id": "02c2cb7c-7e7b-4a57-9872-77fe249ce3ae",
+      "name": "JS Plan Filter"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        624,
+        -512
+      ],
+      "id": "4bba4730-80bb-4dd0-ac8c-5a3f9c1bde4e",
+      "name": "Merge Outputs"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        976,
+        -496
+      ],
+      "id": "c53aa85b-bfd6-436d-9165-d1e09b9d2ce9",
+      "name": "Aggregate Results"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ce2d438f-309f-4b25-ac7e-4c5afb1b8f55",
+                    "leftValue": "={{ $json.type_message }}",
+                    "rightValue": "text",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains",
+                      "rightType": "any"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a19516e6-e3aa-4ddd-a96f-52ed0fb6d685",
+                    "leftValue": "={{ $json.type_message }}",
+                    "rightValue": "chart",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains",
+                      "rightType": "any"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b60f1d91-1235-49bc-990c-a2b70505faa2",
+                    "leftValue": "={{ $json.type_message }}",
+                    "rightValue": "table",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains",
+                      "rightType": "any"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "allMatchingOutputs": true
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -1360,
+        -512
+      ],
+      "id": "f9139510-052f-4865-a46f-be9b5bda9cbf",
+      "name": "Switch Output Types"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Lấy item đầu vào từ node Switch\nconst item = $input.first();\n\n// 2. Lấy chuỗi dữ liệu kết quả (đã được stringify từ các bước trước)\nconst resultString = item.json.result; \n\nlet rowsData = [];\n\n// 3. Parse chuỗi JSON trở lại thành mảng Object\ntry {\n  if (resultString) {\n    rowsData = JSON.parse(resultString);\n  }\n} catch (e) {\n  console.log(\"Lỗi parsing dữ liệu bảng: \", e);\n  rowsData = [];\n}\n\n// 4. Kiểm tra nếu không có dữ liệu\nif (!Array.isArray(rowsData) || rowsData.length === 0) {\n   return [{\n     json: {\n       table: {\n         columns: [],\n         rows: []\n       }\n     }\n   }];\n}\n\n// 5. Tách lấy tên cột (headers)\nconst columns = Object.keys(rowsData[0]);\n\n// 6. Biến đổi dữ liệu thành mảng 2 chiều (Array of Arrays) để khớp format output\n// Ví dụ: [[Val1, Val2], [Val3, Val4]]\nconst rows = rowsData.map(row => columns.map(col => row[col] ?? null));\n\n\n// 8. Trả về kết quả chuẩn format\nreturn [{\n  json: {\n    table: {\n      columns: columns,\n      rows: rows,\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -368,
+        80
+      ],
+      "id": "62236670-6b3c-4c6b-b5e9-be32fc93ecc7",
+      "name": "JS Table Formatter"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -752,
+        -496
+      ],
+      "id": "88605455-02a8-487c-8377-b97ee6ada3e1",
+      "name": "JS Chart Context"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Lấy item đầu vào (thường là từ node Merge)\n// Chúng ta dùng .first() vì (Merge/Summarize) thường gộp thành 1 item\nconst inputItem = $input.first();\n\n// 2. Trích xuất dữ liệu một cách an toàn\n// (Thêm || '...' để chống lỗi 'undefined' nếu một nhánh không trả về gì)\nconst textData = inputItem.json.data[0]?.output|| \"Không có dữ liệu text\"; \nconst chartData = inputItem.json.data[1]?.output || {};\nconst tableData = inputItem.json.data[2]?.table || {} \n\n// 3. Xây dựng đối tượng JSON mới\nconst newJsonOutput = {\n  text: textData,\n  chart: chartData,\n  table: tableData,\n};\n\n// 4. SỬA LỖI CHUẨN:\n// Trả về một MẢNG (Array) chứa MỘT đối tượng (item) mới.\nreturn [\n  {\n    json: newJsonOutput\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        -496
+      ],
+      "id": "66da0ae3-f168-49d6-a1c6-3dabedf509ff",
+      "name": "JS Response Payload"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Dưới đây là các tài nguyên để bạn thực hiện nhiệm vụ.\n\n## User Request (Yêu cầu gốc)\n{{ $json.user_input }}\n\n## Câu lệnh SQL đã thực hiện\n{{ $json.sql_code }}\n\n## Kết quả thực hiện\n{{ $json.result }}\n\n## Plan (Kế hoạch thực thi)\n{{ $json.plan }}\n## reference_date (Ngày tham chiếu)\n{{ $now.toISODate() }}\n",
+        "options": {
+          "systemMessage": "Bạn là chuyên gia trực quan hóa. Nhận user request, SQL đã chạy và kết quả. Tạo HTML Chart.js tự chứa (CDN), responsive, canvas full width, không <style> rác. Nếu thiếu dữ liệu cho chart, trả text ngắn. Output JSON: {chart: '<html>...>'}."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -384,
+        -496
+      ],
+      "id": "142b7bc5-c445-4aeb-a88e-13a797d0d6f5",
+      "name": "Agent Chart Builder"
+    },
+    {
+      "parameters": {
+        "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "@tavily/n8n-nodes-tavily.tavilyTool",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        -240
+      ],
+      "id": "434b7982-4d57-49a5-90ed-a746a1fae966",
+      "name": "Tool Tavily1",
+      "credentials": {
+        "tavilyApi": {
+          "id": "RttnGPsjLKJtO7zH",
+          "name": "Tavily account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Hãy xem xét, biên tập và làm sâu sắc các bản phân tích dưới đây để chúng đồng nhất và giàu insight.\n- Đầu ra rõ ràng, markdown chuẩn, output chỉ là đoạn văn markdown để gửi về  cho người dùng, không có json gì hết\n\n[INPUT_TEXT]\n{{ $json[\"text\"] }}",
+        "options": {
+          "systemMessage": "Bạn là Data Analysis Editor. Nhận input_text (đã có kết quả), biên tập giàu insight. Có thể web search nếu cần. Xuất bản markdown gọn: dùng H2/H3, bullet, nêu chênh lệch/insight/hành động. Không JSON."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1632,
+        -496
+      ],
+      "id": "5fc705fd-d9b1-4d2f-8a7b-87225a1a3220",
+      "name": "Agent insight"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Lấy đối tượng JSON gốc từ node 'JS Response Payload'\nconst item = $('JS Response Payload').first().json;\n\n// 2. Lấy dữ liệu mới từ node INPUT (đầu vào)\nconst newData = $input.first().json.output;\n\n// 3. Thực hiện thay thế 'text' (luôn luôn an toàn)\nitem.text = newData;\n\n// 6. Trả về đối tượng đã được cập nhật\nreturn item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        -496
+      ],
+      "id": "336fbeb8-d64b-4215-9812-a7f89c127542",
+      "name": "JS Response Payload1"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n\nreturn [{ json: { schemaMarkdown: $input.first().json.schema } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3536,
+        -496
+      ],
+      "id": "7a69c7f2-98d9-4179-b501-55faa9bde9ad",
+      "name": "JS Schema Markdown1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $('Code in JavaScript').all() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2496,
+        -496
+      ],
+      "id": "0edd0a4c-0071-46cb-a7de-577935935aba",
+      "name": "Webhook Response1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bb17371c-6a34-421e-b659-75aa42041122",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -4016,
+        -496
+      ],
+      "id": "c1fdec44-9948-41fa-ba13-92275d80e042",
+      "name": "Webhook Intake",
+      "webhookId": "3916d1a6-c2f4-45e5-8bcd-d4103c3c41ef"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -2736,
+        -208
+      ],
+      "id": "3108ffbc-8250-4157-bb75-165c91de5b7d",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "l4b7nZCi1lDVhESq",
+          "name": "OpenRouter - trả phí"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Dưới đây là các tài nguyên để bạn thực hiện nhiệm vụ.\nUser: {{ $('Webhook Intake').first().json.body.message }}\nSchema: {{ $('JS Schema Markdown1').item.json.schemaMarkdown }}\n\n## Plan (Kế hoạch thực thi)\n{{ $json.output }}\n\n## reference_date (Ngày tham chiếu)\n{{ $now.toISODate() }}\n",
+        "options": {
+          "systemMessage": "Bạn là bot Text-to-SQL cho PostgreSQL. Nhiệm vụ: chuyển câu hỏi người dùng thành một câu lệnh SQL duy nhất dựa trên schema và plan.\n--- QUY TẮC ---\n1) Đầu ra: CHỈ trả một câu SQL đúng.\n2) Không giải thích, không nói \"Đây là câu lệnh SQL\".\n3) Không Markdown: không dùng ```sql.\n4) Chính xác tên bảng/cột (phân biệt hoa thường).\n5) An toàn: chỉ SELECT, không DELETE/UPDATE/INSERT/DROP.\n\nSQL Query:"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -2320,
+        -496
+      ],
+      "id": "cb2728ab-59fb-4f3f-8a41-51cef41c95fe",
+      "name": "Agent Chart Builder2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1920,
+        -496
+      ],
+      "id": "51dcc178-1e8c-4df1-981d-994f4598dcd9",
+      "name": "PG Execute Chart SQL2",
+      "credentials": {
+        "postgres": {
+          "id": "JPLHhjDClSaaqI9m",
+          "name": "database giáp agent2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        -240
+      ],
+      "id": "44b67330-9bd5-421e-9c65-5e3926e6763b",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "l4b7nZCi1lDVhESq",
+          "name": "OpenRouter - trả phí"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lấy tất cả item từ đầu vào\nconst items = $input.all();\nconst allItems = $input.all().map(item => item.json);\n\n\nconst last_result = JSON.stringify(allItems);\n\n// Lấy code Python từ Agent Chart\n// const chartCode = $('Agent Chart Builder').first().json.output.code;\n\n// === XỬ LÝ CSV ===\n\nlet fileDataUri = \"\"; // Đổi tên biến cho rõ ràng\n\n// Chỉ tạo file CSV nếu có dữ liệu\nif (items.length > 0) {\n  \n  // 1. Lấy tiêu đề (columns) từ item đầu tiên\n  const columns = Object.keys(items[0].json);\n\n  // 2. Lấy dữ liệu (rows)\n  const rows = items.map(item => {\n    return columns.map(colName => item.json[colName]);\n  });\n\n  // 3. Tạo chuỗi CSV\n  const csvString = [columns] // Nối tiêu đề\n    .concat(rows)             // Nối các dòng dữ liệu\n    .map(r => r.map(v => `\"${String(v ?? '').replace(/\"/g, '\"\"')}\"`).join(','))\n    .join('\\n');\n  \n  // 4. Chuyển sang Base64\n  const base64Data = Buffer.from(csvString, \"utf8\").toString(\"base64\");\n\n  // 5. SỬA LỖI CHUẨN: Thêm tiền tố (prefix) Data URI\n  fileDataUri = `data:text/csv;base64,${base64Data}`;\n\n} else {\n  console.log(\"Không có dữ liệu đầu vào để tạo file CSV.\");\n  fileDataUri = \"data:text/csv;base64,\"; // Trả về file rỗng\n}\n\n// === TRẢ VỀ KẾT QUẢ ===\n\nreturn [{\n  json: {\n      // code: chartCode,\n      file: {\n        filename: `filename_${$now.toFormat('yyyyMMdd_HHmmss')}.csv`,\n        data: fileDataUri, // Trả về file Data URI chuẩn\n        result: last_result\n      },\n    \n      // comment: $('Agent Chart Builder').first().json.output.comment\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1696,
+        -496
+      ],
+      "id": "f67b170f-c4e5-4ae2-af48-5057e40a95a6",
+      "name": "JS Chart Package2"
+    },
+    {
+      "parameters": {
+        "description": "Generate interactive HTML charts (bar, line, pie, scatter) from data. Input should be a JSON object with: {\"type\": \"bar|line|pie|scatter\", \"data\": {\"labels\": [...], \"values\": [...]}, \"title\": \"Chart Title\", \"xLabel\": \"X Axis\", \"yLabel\": \"Y Axis\"}. Returns complete HTML with embedded Chart.js visualization.",
+        "jsCode": "// Parse the input query (expecting JSON string)\nconst input = typeof query === 'string' ? JSON.parse(query) : query;\n\nconst chartType = input.type || 'bar';\nconst data = input.data || {};\nconst title = input.title || 'Chart';\nconst xLabel = input.xLabel || '';\nconst yLabel = input.yLabel || '';\n\n// Generate a unique chart ID\nconst chartId = 'chart_' + Date.now();\n\n// Create the HTML with embedded Chart.js\nconst html = `\n<!DOCTYPE html>\n<html>\n<head>\n  <title>${title}</title>\n  <script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>\n  <style>\n    body {\n      font-family: Arial, sans-serif;\n      padding: 20px;\n      display: flex;\n      justify-content: center;\n      align-items: center;\n      min-height: 100vh;\n      margin: 0;\n      background-color: #f5f5f5;\n    }\n    .chart-container {\n      background: white;\n      padding: 20px;\n      border-radius: 8px;\n      box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n      max-width: 800px;\n      width: 100%;\n    }\n    canvas {\n      max-width: 100%;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"chart-container\">\n    <canvas id=\"${chartId}\"></canvas>\n  </div>\n  <script>\n    const ctx = document.getElementById('${chartId}').getContext('2d');\n    new Chart(ctx, {\n      type: '${chartType}',\n      data: {\n        labels: ${JSON.stringify(data.labels || [])},\n        datasets: [{\n          label: '${title}',\n          data: ${JSON.stringify(data.values || [])},\n          backgroundColor: [\n            'rgba(255, 99, 132, 0.7)',\n            'rgba(54, 162, 235, 0.7)',\n            'rgba(255, 206, 86, 0.7)',\n            'rgba(75, 192, 192, 0.7)',\n            'rgba(153, 102, 255, 0.7)',\n            'rgba(255, 159, 64, 0.7)'\n          ],\n          borderColor: [\n            'rgba(255, 99, 132, 1)',\n            'rgba(54, 162, 235, 1)',\n            'rgba(255, 206, 86, 1)',\n            'rgba(75, 192, 192, 1)',\n            'rgba(153, 102, 255, 1)',\n            'rgba(255, 159, 64, 1)'\n          ],\n          borderWidth: 1\n        }]\n      },\n      options: {\n        responsive: true,\n        plugins: {\n          title: {\n            display: true,\n            text: '${title}',\n            font: { size: 18 }\n          },\n          legend: {\n            display: ${chartType === 'pie' ? 'true' : 'false'}\n          }\n        },\n        scales: ${chartType !== 'pie' ? `{\n          x: {\n            title: {\n              display: ${xLabel ? 'true' : 'false'},\n              text: '${xLabel}'\n            }\n          },\n          y: {\n            title: {\n              display: ${yLabel ? 'true' : 'false'},\n              text: '${yLabel}'\n            },\n            beginAtZero: true\n          }\n        }` : '{}'}\n      }\n    });\n  </script>\n</body>\n</html>\n`;\n\nreturn html;"
+      },
+      "id": "ecc102ac-e828-45b0-9e9e-63073ab69c3c",
+      "name": "Chart Generation Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        -272
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        -1104
+      ],
+      "id": "ba7cc1d9-3e62-419a-acab-e14fa87ccb2b",
+      "name": "JS Text Context"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\n## User Request (Yêu cầu gốc)\n{{ $json.user_input }}\n\n## Câu lệnh SQL đã thực hiện\n{{ $json.sql_code }}\n\n## Kết quả thực hiện\n{{ $json.result }}\n\n## Plan (Kế hoạch thực thi)\n{{ $json.plan }}",
+        "options": {
+          "systemMessage": "Bạn là biên tập viên phân tích dữ liệu. Nhận text, biên tập ngắn gọn, rõ ý, tiếng Việt có dấu. Dùng markdown H2/H3 và bullet. Không trả JSON, không code block, không bảng. Chỉ nội dung hiển thị cho người dùng."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -368,
+        -1104
+      ],
+      "id": "d98d0718-476e-492d-8267-a929ba9d6b2c",
+      "name": "Agent Text Response"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        -896
+      ],
+      "id": "e2a3e2c8-2be9-4ef2-a49b-16a144b6022f",
+      "name": "OpenRouter Chat Model2",
+      "credentials": {
+        "openRouterApi": {
+          "id": "l4b7nZCi1lDVhESq",
+          "name": "OpenRouter - trả phí"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        -240
+      ],
+      "id": "bd9e1d67-5364-472a-90f9-f125124901bf",
+      "name": "OpenRouter Chat Model3",
+      "credentials": {
+        "openRouterApi": {
+          "id": "l4b7nZCi1lDVhESq",
+          "name": "OpenRouter - trả phí"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -3248,
+        -144
+      ],
+      "id": "318eed69-69f8-4712-8da4-7e1c6743d1c3",
+      "name": "OpenRouter Chat Model4",
+      "credentials": {
+        "openRouterApi": {
+          "id": "l4b7nZCi1lDVhESq",
+          "name": "OpenRouter - trả phí"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\n// Hàm kiểm tra rỗng (Check null, undefined, \"\", {}, [])\nfunction isEmpty(value) {\n  if (value === null || value === undefined) return true;\n  if (typeof value === 'string') return value.trim().length === 0;\n  if (Array.isArray(value)) return value.length === 0;\n  if (typeof value === 'object') return Object.keys(value).length === 0;\n  return false;\n}\n\nfor (const item of items) {\n  const input = item.json;\n  \n  // Khởi tạo biến chứa dữ liệu cuối cùng\n  let finalDataText = null;\n  let finalDataChart = input.chart; // Mặc định lấy từ root\n  let finalDataTable = input.table; // Mặc định lấy từ root\n\n  // ==========================================\n  // 1. PHÂN TÍCH NỘI DUNG TRONG TEXT (QUAN TRỌNG)\n  // ==========================================\n  if (input.text && typeof input.text === 'string') {\n    // Nếu text chứa format JSON markdown từ AI\n    if (input.text.includes('```json')) {\n      try {\n        const cleanJson = input.text\n          .replace(/^```json\\s*/i, '')\n          .replace(/\\s*```$/i, '');\n        \n        const parsedObj = JSON.parse(cleanJson);\n        \n        // 1.1. Lấy text từ bên trong JSON đã parse\n        if (parsedObj.text) finalDataText = parsedObj.text;\n        \n        // 1.2. TỰ ĐỘNG LẤY CHART TỪ TRONG JSON (Nếu bên ngoài chưa có)\n        if (isEmpty(finalDataChart) && parsedObj.chart) {\n          finalDataChart = parsedObj.chart;\n        }\n        \n        // 1.3. TỰ ĐỘNG LẤY TABLE TỪ TRONG JSON (Nếu bên ngoài chưa có)\n        if (isEmpty(finalDataTable) && parsedObj.table) {\n          finalDataTable = parsedObj.table;\n        }\n\n      } catch (e) {\n        console.log('Lỗi parse JSON bên trong text, sử dụng text gốc');\n        // Fallback: Nếu lỗi parse, coi toàn bộ là text thường\n        finalDataText = input.text; \n      }\n    } \n    else {\n      // Text thường, không phải JSON\n      finalDataText = input.text;\n    }\n  }\n\n  // ==========================================\n  // 2. ĐÓNG GÓI KẾT QUẢ (Output Construction)\n  // ==========================================\n\n  // --- A. TEXT ---\n  if (!isEmpty(finalDataText)) {\n    results.push({\n      json: { type: \"text\", data: finalDataText }\n    });\n  }\n\n  // --- B. CHART ---\n  if (!isEmpty(finalDataChart)) {\n    let cleanChart = finalDataChart;\n    // Clean markdown HTML nếu cần\n    if (typeof cleanChart === 'string') {\n      cleanChart = cleanChart\n        .replace(/^```html\\s*/i, '')\n        .replace(/\\s*```$/i, '')\n        .trim();\n    }\n    \n    // Kiểm tra lại lần nữa sau khi clean\n    if (!isEmpty(cleanChart)) {\n      results.push({\n        json: { type: \"chart\", data: cleanChart }\n      });\n    }\n  }\n\n  // --- C. TABLE ---\n  if (!isEmpty(finalDataTable)) {\n    results.push({\n      json: { type: \"table\", data: finalDataTable }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2256,
+        -496
+      ],
+      "id": "12fff649-af48-4f2d-8a83-c2997f04ed3d",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b0af1d32-a072-4b77-af9e-26076042121e",
+              "name": "schema",
+              "value": "# Hướng dẫn SQL cho BeeBox AI Agent (dùng cho chatbot/dashboard)\n\nMục tiêu: giúp agent sinh câu SQL đúng, bám sát schema dashboard (từ `schema.sql`/`fake.sql`), cho ra kết quả có insight, chạy được ngay. Không thay đổi logic target/hash, không scale tiền tệ trong SQL.\n\n## 1) Nguyên tắc cốt lõi\n- Tiền tệ lưu **RAW VNĐ** (`amount`, `revenue`, `premium_amount`, `target`, `sum_assured`…); **không** chia 1e6/1e9 trong truy vấn. Format tiền là việc của frontend/chat UI.\n- Ưu tiên dùng các VIEW `v_*` (đã xử lý anchor_date). Chỉ join bảng gốc khi cần drill-down chi tiết.\n- Anchor date: dựa trên `MAX(effective_date | transaction_date)`; nếu viết mới, lọc `date >= date_trunc('month', anchor_date)` (không dùng `NOW()` trực tiếp).\n- Giữ tiếng Việt có dấu khi lọc chuỗi (`pipeline_stage`, `sales_channel`, `status`…).\n- Luôn `COALESCE` khi tính toán; khi tính %, `ROUND` hợp lý.\n\n## 2) Schema đầy đủ & cột quan trọng\n### Agent 1 (PAS – Policy/Revenue)\n- `product(product_id PK, product_code UNIQUE, product_name, product_type, product_category, status, issue_date, end_date)`\n- `party(party_id PK, name, date_of_birth, gender ENUM('Male','Female'), citizen_id, location, phone_number, email, role, pipeline_stage, sales_channel)`\n- `policy(policy_id PK, policy_number UNIQUE, party_id FK, effective_date, expiration_date, status, premium_due_date, campaign_code)`\n- `coverage(coverage_id PK, policy_id FK, party_id FK, product_id FK, sum_assured, premium_amount)`\n- `claim(claim_id PK, coverage_id FK, event_date, request_date, claim_status, requested_amount, approved_amount, payment_date, description)`\n- `transaction(transaction_id PK, policy_id FK, transaction_type, amount, transaction_date, is_cost BOOL, transaction_month)` — doanh thu/chi phí RAW.\n\n### Agent 2 (Budget / Nhân sự)\n- `department(department_id PK, department_name)`\n- `employee(employee_id PK, full_name, email, department_id FK, manager_id FK, role, leads_count, activities_count, revenue RAW)`\n- `request(request_id PK, request_code UNIQUE, title, requester_id FK, department_id FK, status, description, total_estimated_amount, created_date)`\n- `budget_item(item_id PK, request_id FK, item_name, description, requested_amount, vendor_quote_link)`\n- `approval_workflow(step_id PK, request_id FK, step_number, approver_id FK, status, comment, action_timestamp)`\n- `document(document_id PK, request_id FK, file_name, file_path, uploaded_by_id FK, upload_timestamp)`\n\n## 3) Các VIEW nên dùng (đã bám anchor date)\n- `v_pipeline_stages(id, label, count, color)` — đếm giai đoạn pipeline, đã sort.\n- `v_top_performers_heatmap(name, nhanVon, hoatDong, doanhThu)` — top 20 nhân viên (revenue > 0).\n- `v_top_performers_list(rank, name, revenue, avatar)` — bảng xếp hạng doanh thu.\n- `v_financial_data(month, revenue, cost)` — 3 tháng gần nhất.\n- `v_sales_channels(channel, value, color)` — phân bổ khách hàng theo kênh trong tháng anchor.\n- `v_product_lines(id, name, revenue, target, isHighlight)` — doanh thu theo dòng sản phẩm, target hash ổn định.\n- `v_product_types(category, name, revenue, target)` — doanh thu theo loại trong dòng.\n- `v_sales_quantity(type, sold, target)` — số lượng coverage bán theo tên rút gọn sản phẩm.\n- `v_kpis_summary(total_revenue_millions, total_policies_sold, active_pipeline, conversion_rate_percent)` — KPI tổng quan tháng hiện tại.\n> Target ở các view trên tính bằng `hashtext` (75–135% revenue thực) → không tự đổi.\n\n## 4) Mẫu truy vấn an toàn\n- Doanh thu tháng hiện tại (anchor):\n```sql\nWITH anchor AS (SELECT MAX(transaction_date) AS dt FROM public.transaction)\nSELECT COALESCE(SUM(amount), 0) AS revenue_raw\nFROM public.transaction t, anchor a\nWHERE t.is_cost = FALSE\n  AND date_trunc('month', t.transaction_date) = date_trunc('month', a.dt);\n```\n- Top 5 sản phẩm bán chạy:\n```sql\nSELECT p.product_name, COUNT(c.coverage_id) AS sold_count\nFROM public.coverage c\nJOIN public.product p ON c.product_id = p.product_id\nGROUP BY p.product_name\nORDER BY sold_count DESC\nLIMIT 5;\n```\n\n## 5) Tương tác với Dashboard/Chat UI\n- Webhook trả JSON array; mỗi phần tử có `json.type`:\n  - `text`: Markdown (heading/bullet ngắn gọn, tiếng Việt có dấu).\n  - `table`: `{ columns: [...], rows: [[...], ...] }` (UI hiển thị tối đa 8 dòng).\n  - `chart`: HTML tự chứa (Chart.js), bỏ `<style>` cũ; canvas full width, responsive.\n- Thứ tự phần tử trong JSON = thứ tự hiển thị; có thể mix nhiều `text/table/chart`.\n- Dashboard tự gửi prompt khi người dùng bấm card/biểu đồ kèm giá trị đang xem → trả lời ngắn, bám giá trị đó, thêm insight & hành động ưu tiên.\n- Không scale tiền trong SQL; nếu cần mô tả, ghi rõ “giữ raw VNĐ”.\n\n## 6) Lưu ý chất lượng & insight\n- Luôn `COALESCE` tránh NULL; tính % thì `ROUND`.\n- Nếu viết query mới: tạo `anchor_date` từ MAX ngày hiệu lực/giao dịch, lọc theo tháng anchor.\n- Khi trả lời: nêu tháng anchor, actual vs target, highlight chênh lệch & hành động khuyến nghị.\n- `fake.sql` chứa dữ liệu mẫu để kiểm thử; không thay logic view/target.\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3792,
+        -496
+      ],
+      "id": "6f16e85b-7999-4e7d-8d4a-62cb95a390e2",
+      "name": "Edit Fields"
+    }
+  ],
+  "connections": {
+    "Agent Output Classifier": {
+      "main": [
+        [
+          {
+            "node": "Agent Output Planner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser Type Array": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Agent Output Classifier",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planner Scratchpad": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent Output Planner",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent Output Planner": {
+      "main": [
+        [
+          {
+            "node": "Agent Chart Builder2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS Plan Filter": {
+      "main": [
+        [
+          {
+            "node": "Switch Output Types",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Outputs": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "JS Response Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Output Types": {
+      "main": [
+        [
+          {
+            "node": "JS Text Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "JS Chart Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "JS Table Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS Table Formatter": {
+      "main": [
+        [
+          {
+            "node": "Merge Outputs",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "JS Chart Context": {
+      "main": [
+        [
+          {
+            "node": "Agent Chart Builder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS Response Payload": {
+      "main": [
+        [
+          {
+            "node": "Agent insight",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent Chart Builder": {
+      "main": [
+        [
+          {
+            "node": "Merge Outputs",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Tool Tavily1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent insight",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent insight": {
+      "main": [
+        [
+          {
+            "node": "JS Response Payload1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS Response Payload1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS Schema Markdown1": {
+      "main": [
+        [
+          {
+            "node": "Agent Output Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Intake": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent Output Planner",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Agent Chart Builder2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent Chart Builder2": {
+      "main": [
+        [
+          {
+            "node": "PG Execute Chart SQL2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG Execute Chart SQL2": {
+      "main": [
+        [
+          {
+            "node": "JS Chart Package2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent Chart Builder",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS Chart Package2": {
+      "main": [
+        [
+          {
+            "node": "JS Plan Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chart Generation Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent Chart Builder",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS Text Context": {
+      "main": [
+        [
+          {
+            "node": "Agent Text Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent Text Response": {
+      "main": [
+        [
+          {
+            "node": "Merge Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent Text Response",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent insight",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent Output Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Parser Type Array",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "JS Schema Markdown1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4ab2962d7056cbe8bc8d7bffb15c50a0d6270ddabb3874584b7c9ceb1bd4506c"
+  }
+}
