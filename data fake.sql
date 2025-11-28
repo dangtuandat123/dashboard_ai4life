@@ -205,32 +205,23 @@ BEGIN
     -- 1. Products
     INSERT INTO public.product (product_code, product_name, product_type, status, issue_date, end_date, product_category)
     VALUES 
-    ('BH-SK-001', 'Bảo hiểm Sức khỏe Toàn diện', 'Bảo vệ sức khỏe', 'Active', '2023-01-01', NULL, 'Bảo hiểm sức khỏe'),
-    ('BH-NT-001', 'Bảo hiểm Nhân thọ Trọn đời', 'Bảo vệ 100%', 'Active', '2023-01-01', NULL, 'Bảo hiểm nhân thọ'),
-    ('BH-GD-001', 'Bảo hiểm Giáo dục Tương lai', 'Giáo dục', 'Active', '2023-06-01', NULL, 'Bảo hiểm giáo dục'),
-    ('BH-HT-001', 'Bảo hiểm Hưu trí An nhàn', 'Hưu trí', 'Active', '2023-06-01', NULL, 'Bảo hiểm hưu trí'),
-    ('BH-TN-001', 'Bảo hiểm Tai nạn 24/7', 'Tai nạn', 'Active', '2023-01-01', NULL, 'Bảo hiểm tai nạn'),
-    ('BH-BHI-001', 'Bảo hiểm Bệnh hiểm nghèo', 'Bệnh hiểm nghèo', 'Active', '2023-03-01', NULL, 'Bảo hiểm bệnh hiểm nghèo'),
-    ('BH-DL-001', 'Bảo hiểm Du lịch Quốc tế', 'Du lịch', 'Active', '2023-01-01', NULL, 'Bảo hiểm du lịch'),
-    ('BH-NHA-001', 'Bảo hiểm Nhà tư nhân', 'Tài sản', 'Active', '2023-01-01', NULL, 'Bảo hiểm tài sản'),
-    ('BH-OTO-001', 'Bảo hiểm Vật chất Xe ô tô', 'Xe cơ giới', 'Active', '2023-01-01', NULL, 'Bảo hiểm xe cơ giới'),
-    ('ILP-DT-001', 'Bảo hiểm Liên kết Đầu tư', 'Đầu tư', 'Active', '2024-01-01', NULL, 'Bảo hiểm liên kết đầu tư'),
-    ('BH-UT-001', 'Bảo hiểm Ung thư 360', 'Bệnh hiểm nghèo', 'Active', '2024-01-01', NULL, 'Bảo hiểm bệnh hiểm nghèo'),
-    ('HTTH-TS-001', 'Bảo hiểm thưởng sống cao', 'Thưởng sống', 'Active', '2024-01-01', NULL, 'Bảo hiểm nhân thọ'),
-    -- [NEW] Additional Products for Variety
-    ('BH-SK-002', 'Bảo hiểm Nha khoa Cao cấp', 'Nha khoa', 'Active', '2024-01-01', NULL, 'Bảo hiểm sức khỏe'),
-    ('BH-SK-003', 'Bảo hiểm Thai sản Hạnh phúc', 'Thai sản', 'Active', '2024-01-01', NULL, 'Bảo hiểm sức khỏe'),
-    ('BH-SK-004', 'Bảo hiểm Trợ cấp Y tế', 'Trợ cấp', 'Active', '2024-01-01', NULL, 'Bảo hiểm sức khỏe'),
-    ('BH-NT-002', 'Bảo hiểm Tử kỳ Linh hoạt', 'Tử kỳ', 'Active', '2024-01-01', NULL, 'Bảo hiểm nhân thọ'),
-    ('BH-NT-003', 'Bảo hiểm Hỗn hợp Tích lũy', 'Hỗn hợp', 'Active', '2024-01-01', NULL, 'Bảo hiểm nhân thọ'),
-    ('BH-OTO-002', 'Bảo hiểm TNDS Ô tô', 'TNDS', 'Active', '2024-01-01', NULL, 'Bảo hiểm xe cơ giới'),
-    ('BH-OTO-003', 'Bảo hiểm Vật chất Xe máy', 'Xe máy', 'Active', '2024-01-01', NULL, 'Bảo hiểm xe cơ giới'),
-    ('BH-NHA-002', 'Bảo hiểm Cháy nổ Bắt buộc', 'Tài sản', 'Active', '2024-01-01', NULL, 'Bảo hiểm tài sản'),
-    ('BH-DL-002', 'Bảo hiểm Du lịch Trong nước', 'Du lịch', 'Active', '2024-01-01', NULL, 'Bảo hiểm du lịch'),
-    ('BH-TN-002', 'Bảo hiểm Tai nạn Lao động', 'Tai nạn', 'Active', '2024-01-01', NULL, 'Bảo hiểm tai nạn'),
-    ('BH-GD-002', 'Bảo hiểm Học vấn Toàn diện', 'Giáo dục', 'Active', '2024-01-01', NULL, 'Bảo hiểm giáo dục'),
-    ('BH-HT-002', 'Bảo hiểm Hưu trí Tự nguyện', 'Hưu trí', 'Active', '2024-01-01', NULL, 'Bảo hiểm hưu trí'),
-    ('ILP-DT-002', 'Bảo hiểm Đầu tư Thịnh vượng', 'Đầu tư', 'Active', '2024-01-01', NULL, 'Bảo hiểm liên kết đầu tư')
+    -- Dòng Chính: BẢO VỆ, Tích lũy & Đầu tư
+    ('BH-BVTL-001', 'Gia đình - Đồng Hành Vững Bước', 'Bảo hiểm liên kết chung', 'Active', '2024-01-01', NULL, 'BẢO VỆ, Tích lũy & Đầu tư'),
+    ('BH-BVTL-002', 'Cá nhân - Đồng Hành Sống Thỏa Chất', 'Bảo hiểm liên kết đơn vị', 'Active', '2024-01-01', NULL, 'BẢO VỆ, Tích lũy & Đầu tư'),
+    
+    -- Dòng Bổ sung: Gia tăng BẢO VỆ (Sản phẩm bổ trợ)
+    ('BH-GT-001', 'Bảo hiểm 100 Bệnh Hiểm Nghèo', 'Bảo hiểm bệnh hiểm nghèo', 'Active', '2024-01-01', NULL, 'Gia tăng BẢO VỆ (Sản phẩm bổ trợ)'),
+    ('BH-GT-002', 'Bảo hiểm Tai nạn toàn diện', 'Bảo hiểm tai nạn', 'Active', '2024-01-01', NULL, 'Gia tăng BẢO VỆ (Sản phẩm bổ trợ)'),
+    ('BH-GT-003', 'Bảo hiểm Đồng hành Điều trị Ung thư', 'Bảo hiểm ung thư', 'Active', '2024-01-01', NULL, 'Gia tăng BẢO VỆ (Sản phẩm bổ trợ)'),
+    ('BH-GT-004', 'Bảo Hiểm Hỗ Trợ Viện Phí Toàn Cầu', 'Bảo hiểm viện phí', 'Active', '2024-01-01', NULL, 'Gia tăng BẢO VỆ (Sản phẩm bổ trợ)'),
+    ('BH-GT-005', 'Bảo Hiểm Chăm Sóc Y Tế Toàn Cầu', 'Bảo hiểm y tế', 'Active', '2024-01-01', NULL, 'Gia tăng BẢO VỆ (Sản phẩm bổ trợ)'),
+    
+    -- Dòng Chính: Bảo Hiểm Sức Khỏe Tai Nạn Nhóm
+    ('BH-NHOM-001', 'Lợi ích Chương trình Bảo hiểm Nhóm', 'Bảo hiểm nhóm cơ bản', 'Active', '2024-01-01', NULL, 'Bảo Hiểm Sức Khỏe Tai Nạn Nhóm'),
+    ('BH-NHOM-002', 'Quyền lợi Bảo hiểm Cơ bản', 'Bảo hiểm nhóm cơ bản', 'Active', '2024-01-01', NULL, 'Bảo Hiểm Sức Khỏe Tai Nạn Nhóm'),
+    
+    -- Dòng Sản phẩm Lựa chọn Bổ sung (Tăng Bảo vệ nhóm)
+    ('BH-RIDER-001', 'Bảo hiểm Tai nạn Nhóm (Rider)', 'Bảo hiểm tai nạn nhóm', 'Active', '2024-01-01', NULL, 'Sản phẩm Lựa chọn Bổ sung (Tăng Bảo vệ nhóm)')
     ON CONFLICT (product_code) DO NOTHING;
     
     -- 2. Calculate total policies needed (Using Array for Consistency)
@@ -387,11 +378,13 @@ BEGIN
         p.party_id,
         pr.product_id,
         val.sa,
-        -- Premium Logic: Life ~1.5%, Health ~3%, Others ~2% of Sum Assured
+        -- Premium Logic: Based on new product categories
         (val.sa * CASE 
-            WHEN pr.product_category = 'Bảo hiểm nhân thọ' THEN (0.012 + RANDOM() * 0.008)
-            WHEN pr.product_category = 'Bảo hiểm sức khỏe' THEN (0.025 + RANDOM() * 0.015)
-            ELSE 0.02 
+            WHEN pr.product_category = 'BẢO VỆ, Tích lũy & Đầu tư' THEN (0.015 + RANDOM() * 0.005)  -- 1.5-2.0% for investment-linked
+            WHEN pr.product_category = 'Gia tăng BẢO VỆ (Sản phẩm bổ trợ)' THEN (0.025 + RANDOM() * 0.015)  -- 2.5-4.0% for supplementary health/accident
+            WHEN pr.product_category = 'Bảo Hiểm Sức Khỏe Tai Nạn Nhóm' THEN (0.020 + RANDOM() * 0.010)  -- 2.0-3.0% for group health/accident
+            WHEN pr.product_category = 'Sản phẩm Lựa chọn Bổ sung (Tăng Bảo vệ nhóm)' THEN (0.015 + RANDOM() * 0.010)  -- 1.5-2.5% for group rider
+            ELSE 0.02  -- Fallback 2%
          END)::BIGINT
     FROM tmp_policy p
     CROSS JOIN LATERAL (
@@ -530,11 +523,10 @@ BEGIN
                     END
                 ELSE 'Pending'
             END AS final_claim_status,
-            -- Claim Amount Logic: Life = 100% SA, Health = Partial
-            CASE 
-                WHEN pr.product_category = 'Bảo hiểm nhân thọ' THEN cov.sum_assured
-                ELSE (cov.sum_assured * (CLAIM_AMOUNT_RATIO_MIN + RANDOM() * (CLAIM_AMOUNT_RATIO_MAX - CLAIM_AMOUNT_RATIO_MIN)))
-            END::BIGINT AS requested_amt
+            -- Claim Amount Logic: All new products use partial claims (health/accident/investment-linked nature)
+            -- Investment-linked: partial withdrawal/claims based on account value
+            -- Health/accident/group: partial claims based on actual costs/benefits
+            (cov.sum_assured * (CLAIM_AMOUNT_RATIO_MIN + RANDOM() * (CLAIM_AMOUNT_RATIO_MAX - CLAIM_AMOUNT_RATIO_MIN)))::BIGINT AS requested_amt
     ) status_calc
     WHERE pol.effective_date >= v_start_date 
       AND pol.effective_date <= v_end_date
@@ -699,8 +691,9 @@ BEGIN
     )
     UPDATE public."employee" e
     SET revenue = COALESCE(er.total_revenue, 0),
-        leads_count = COALESCE(ac.policy_count * (3 + RANDOM()*2)::INT, 0), -- 3-5 leads/deal
-        activities_count = COALESCE(ac.policy_count * (5 + RANDOM()*5)::INT, 0) -- 5-10 activities/deal
+        -- Add employee_id-based seed to create unique variance per employee
+        leads_count = COALESCE(ac.policy_count * (3 + (((e.employee_id * 7919) % 100) / 50.0))::INT, 0), -- 3-5 leads/deal with employee-specific variance
+        activities_count = COALESCE(ac.policy_count * (5 + (((e.employee_id * 6421) % 100) / 20.0))::INT, 0) -- 5-10 activities/deal with employee-specific variance
     FROM employee_revenue er
     LEFT JOIN activity_counts ac ON ac.employee_id = er.employee_id
     WHERE e.employee_id = er.employee_id;
