@@ -6,7 +6,7 @@ import { Crown, Medal } from 'lucide-react';
 const TopPerformersHeatmap = () => {
     const { topPerformersHeatmap: heatmapData } = useDashboardData();
     const performers = useMemo(
-        () => [...(heatmapData.data || [])].sort((a, b) => b.doanhThu - a.doanhThu).slice(0, 4),
+        () => [...(heatmapData.data || [])].sort((a, b) => b.hoatDong - a.hoatDong).slice(0, 4),
         [heatmapData.data]
     );
     const firePrompt = (title, text) => window.dispatchEvent(new CustomEvent('bb-insight', { detail: { title, text } }));
