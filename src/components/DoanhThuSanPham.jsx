@@ -69,18 +69,13 @@ const DoanhThuSanPham = () => {
     return (
         <div className="glass rounded-xl p-2 h-full flex flex-col border border-white/10 backdrop-blur-md overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between mb-2 px-1">
-                <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/10 border border-cyan-500/30">
-                        <TrendingUp className="w-4 h-4 text-cyan-400" />
-                    </div>
-                    <div>
-                        <h3 className="text-sm font-bold text-white leading-none">Doanh thu sản phẩm</h3>
-                        <p className="text-[10px] text-slate-400 mt-0.5">Hiệu suất so với mục tiêu KPI</p>
-                    </div>
+            <div className="flex items-center gap-2 mb-2 px-1">
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/10 border border-cyan-500/30">
+                    <TrendingUp className="w-4 h-4 text-cyan-400" />
                 </div>
-                <div className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] text-slate-300 font-medium">
-                    Q4-2025
+                <div>
+                    <h3 className="text-sm font-bold text-white leading-none">Doanh thu sản phẩm</h3>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Hiệu suất so với mục tiêu KPI</p>
                 </div>
             </div>
 
