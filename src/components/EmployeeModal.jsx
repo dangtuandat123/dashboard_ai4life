@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Users, ChevronLeft, ChevronRight, Mail, Building2, Search, Activity, UserCheck, DollarSign } from 'lucide-react';
+import { X, Users, ChevronLeft, ChevronRight, Mail, Building2, Search, Activity, UserCheck, DollarSign, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatVietnameseNumber } from '../utils/formatters';
 import { useFilter } from '../contexts/FilterContext';
@@ -324,6 +324,26 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                                                         </p>
                                                     </div>
                                                 </div>
+                                            </div>
+
+                                            {/* Export Button */}
+                                            <div className="mt-3 pt-3 border-t border-white/5">
+                                                <button
+                                                    onClick={() => {
+                                                        // Trigger AI to generate activity report
+                                                        window.dispatchEvent(new CustomEvent('bb-insight', {
+                                                            detail: {
+                                                                title: 'Báo cáo hoạt động',
+                                                                text: `Xuất báo cáo hoạt động chi tiết cho nhân viên ${emp.full_name} trong tháng ${currentMonth}/${currentYear}. Bao gồm: số cuộc gọi, cuộc hẹn, email, doanh thu đạt được và đánh giá hiệu suất.`
+                                                            }
+                                                        }));
+                                                        onClose();
+                                                    }}
+                                                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-medium transition-all hover:scale-[1.02]"
+                                                >
+                                                    <FileText className="w-4 h-4" />
+                                                    Xuất báo cáo hoạt động
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
