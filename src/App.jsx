@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { ArrowUp, Bot, Moon, Sparkles, Sun, X } from 'lucide-react';
+import { ArrowUp, Bot, Moon, Sparkles, Sun, X, Users } from 'lucide-react';
+import EmployeeModal from './components/EmployeeModal';
 import { useDashboardData } from './data/mockData.jsx';
 import { useFilter } from './contexts/FilterContext';
 import PYPPerformance from './components/PYPPerformance';
@@ -41,6 +42,7 @@ function App() {
     const [chatMode, setChatMode] = useState('nhanh'); // 'nhanh' | 'suy_luan'
     const [chartHeights, setChartHeights] = useState({});
     const [analysisStep, setAnalysisStep] = useState(0);
+    const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
 
     // Các bước phân tích dữ liệu
     const analysisSteps = [
@@ -506,6 +508,13 @@ function App() {
                                 <p className="text-xs font-semibold text-white">{isDark ? 'Chế độ tối' : 'Chế độ sáng'}</p>
                             </div>
                         </button>
+                        <button
+                            onClick={() => setIsEmployeeModalOpen(true)}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-500/30 transition-all text-xs font-medium text-slate-300 hover:text-white"
+                        >
+                            <Users className="w-4 h-4" />
+                            Xem nhân viên
+                        </button>
                         <button className="primary-action">
                             <Sparkles className="w-4 h-4" />
                             Xuất báo cáo
@@ -872,6 +881,12 @@ function App() {
                     </div>
                 </div>
             )}
+
+            {/* Employee Modal */}
+            <EmployeeModal
+                isOpen={isEmployeeModalOpen}
+                onClose={() => setIsEmployeeModalOpen(false)}
+            />
         </div>
     );
 }
