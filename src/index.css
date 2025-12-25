@@ -1403,12 +1403,12 @@ body {
 
 .assistant-input {
   display: flex;
-  gap: 10px;
-  align-items: stretch;
-  padding: 12px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(34, 211, 238, 0.05));
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(139, 92, 246, 0.04));
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.15);
   position: relative;
 }
 
@@ -1418,99 +1418,97 @@ body {
   inset: 0;
   border-radius: 16px;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(34, 211, 238, 0.2));
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.15));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
 .mode-select {
   display: inline-flex;
   align-items: center;
   padding: 0;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(254, 240, 138, 0.24), rgba(250, 204, 21, 0.2));
-  border: 1px solid rgba(250, 204, 21, 0.6);
-  box-shadow: 0 10px 20px rgba(250, 204, 21, 0.22);
+  border-radius: 10px;
+  background: transparent;
+  border: none;
   position: relative;
 }
 
 .mode-select select {
   appearance: none;
-  background: linear-gradient(135deg, #fef08a, #fde047);
-  color: #0b1224;
-  border: 1px solid rgba(250, 204, 21, 0.7);
-  border-radius: 12px;
-  padding: 0 30px 0 10px;
-  height: 40px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.15));
+  color: #e2e8f0;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  border-radius: 10px;
+  padding: 0 28px 0 10px;
+  height: 34px;
   font-size: 11px;
   font-weight: 700;
   outline: none;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
   transition: all 0.25s ease;
 }
 
 .mode-select select:hover,
 .mode-select select:focus {
-  border-color: rgba(250, 204, 21, 0.9);
-  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.25), 0 8px 20px rgba(250, 204, 21, 0.3);
-  transform: translateY(-1px);
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2), 0 6px 16px rgba(99, 102, 241, 0.2);
 }
 
 .mode-select::after {
   content: '▾';
   position: absolute;
-  right: 10px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
-  color: rgba(161, 98, 7, 0.9);
-  font-size: 12px;
+  color: rgba(165, 180, 252, 0.8);
+  font-size: 10px;
 }
 
 .assistant-input input {
   flex: 1;
-  border-radius: 14px;
-  border: 1px solid rgba(99, 102, 241, 0.25);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-  padding: 0 16px;
-  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0 12px;
+  height: 34px;
   color: var(--text-strong);
   font-size: 13px;
   outline: none;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.25s ease;
 }
 
 .assistant-input input::placeholder {
-  color: rgba(148, 163, 184, 0.7);
+  color: rgba(148, 163, 184, 0.6);
+  font-size: 12px;
 }
 
 .assistant-input input:focus {
   border-color: rgba(99, 102, 241, 0.5);
+  background: rgba(255, 255, 255, 0.08);
   box-shadow: 
-    0 0 0 3px rgba(99, 102, 241, 0.2),
-    inset 0 2px 4px rgba(0, 0, 0, 0.1),
-    0 12px 25px rgba(99, 102, 241, 0.15);
+    0 0 0 2px rgba(99, 102, 241, 0.15),
+    inset 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .assistant-send {
-  padding: 0 16px;
-  border-radius: 14px;
+  padding: 0 14px;
+  border-radius: 10px;
   border: none;
-  background: linear-gradient(135deg, #fef08a, #facc15, #f59e0b);
-  background-size: 200% 200%;
-  color: #0b1224;
+  background: linear-gradient(135deg, #818cf8, #6366f1);
+  color: #ffffff;
   font-weight: 800;
-  box-shadow: 0 12px 30px rgba(250, 204, 21, 0.35);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
   transition: all 0.25s ease;
-  height: 40px;
-  min-width: 52px;
-  font-size: 14px;
+  height: 34px;
+  min-width: 42px;
+  font-size: 13px;
   position: relative;
   overflow: hidden;
 }
@@ -1527,8 +1525,8 @@ body {
 }
 
 .assistant-send:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 16px 35px rgba(250, 204, 21, 0.45);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.45);
   animation: sendPulse 0.6s ease;
 }
 
