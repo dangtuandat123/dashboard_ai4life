@@ -14,7 +14,7 @@ const SoLuongBan = () => {
     const treemapData = useMemo(
         () =>
             salesQuantityData.map((item, index) => {
-                const percentage = (item.sold / item.target) * 100;
+                const percentage = item.target > 0 ? (item.sold / item.target) * 100 : 0;
 
                 let gradientFrom;
                 let gradientTo;
@@ -163,9 +163,21 @@ const SoLuongBan = () => {
 
             <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
-                    <Treemap data={treemapData} dataKey="size" stroke="transparent" content={<CustomContent />}>
-                        <Tooltip content={<CustomTooltip />} cursor={false} />
-                    </Treemap>
+                    {treemapData.length > 0 ? (
+                        <Treemap
+                            key={treemapData.length + '-' + treemapData[0]?.name}
+                            data={treemapData}
+                            dataKey="size"
+                            stroke="transparent"
+                            content={<CustomContent />}
+                        >
+                            <Tooltip content={<CustomTooltip />} cursor={false} />
+                        </Treemap>
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-slate-500 text-xs">
+                            Không có dữ liệu
+                        </div>
+                    )}
                 </ResponsiveContainer>
             </div>
         </div>

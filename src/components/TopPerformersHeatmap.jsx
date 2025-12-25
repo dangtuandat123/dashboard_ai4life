@@ -6,12 +6,12 @@ import { Crown, Medal } from 'lucide-react';
 const TopPerformersHeatmap = () => {
     const { topPerformersHeatmap: heatmapData } = useDashboardData();
     const performers = useMemo(
-        () => [...(heatmapData.data || [])].sort((a, b) => b.hoatDong - a.hoatDong).slice(0, 4),
+        () => [...(heatmapData.data || [])].sort((a, b) => b.activities_count - a.activities_count).slice(0, 4),
         [heatmapData.data]
     );
     const firePrompt = (title, text) => window.dispatchEvent(new CustomEvent('bb-insight', { detail: { title, text } }));
 
-    const allValues = performers.flatMap((person) => [person.hoatDong, person.doanhThu]);
+    const allValues = performers.flatMap((person) => [person.activities_count, person.revenue]);
     const minValue = Math.min(...allValues);
     const maxValue = Math.max(...allValues);
 
@@ -19,11 +19,11 @@ const TopPerformersHeatmap = () => {
         const normalized = (value - minValue) / (maxValue - minValue);
         const opacity = 0.3 + normalized * 0.7; // Tăng độ đậm tối thiểu lên 0.3
 
-        if (metric === 'hoatDong') return `rgba(168, 85, 247, ${opacity})`;
+        if (metric === 'activities_count') return `rgba(168, 85, 247, ${opacity})`;
         return `rgba(251, 191, 36, ${opacity})`;
     };
 
-    const formatValue = (value, metric) => (metric === 'doanhThu' ? formatVietnameseNumber(value) : value);
+    const formatValue = (value, metric) => (metric === 'revenue' ? formatVietnameseNumber(value) : value);
 
     const getRankStyle = (index) => {
         switch (index) {
@@ -69,27 +69,27 @@ const TopPerformersHeatmap = () => {
                             </div>
                             <div
                                 className="rounded-lg flex items-center justify-center text-xs font-bold text-white transition-all hover:scale-105 cursor-pointer h-full shadow-sm"
-                                style={{ backgroundColor: getColorIntensity(performer.hoatDong, 'hoatDong') }}
+                                style={{ backgroundColor: getColorIntensity(performer.activities_count, 'activities_count') }}
                                 onClick={() =>
                                     firePrompt(
                                         'Bản đồ nhiệt hiệu suất',
-                                        `${performer.name}: hoạt động ${formatValue(performer.hoatDong, 'hoatDong')}, doanh thu ${formatValue(performer.doanhThu, 'doanhThu')}`
+                                        `${performer.name}: hoạt động ${formatValue(performer.activities_count, 'activities_count')}, doanh thu ${formatValue(performer.revenue, 'revenue')}`
                                     )
                                 }
                             >
-                                {formatValue(performer.hoatDong, 'hoatDong')}
+                                {formatValue(performer.activities_count, 'activities_count')}
                             </div>
                             <div
                                 className="rounded-lg flex items-center justify-center text-xs font-bold text-white transition-all hover:scale-105 cursor-pointer h-full shadow-sm"
-                                style={{ backgroundColor: getColorIntensity(performer.doanhThu, 'doanhThu') }}
+                                style={{ backgroundColor: getColorIntensity(performer.revenue, 'revenue') }}
                                 onClick={() =>
                                     firePrompt(
                                         'Bản đồ nhiệt hiệu suất',
-                                        `${performer.name}: hoạt động ${formatValue(performer.hoatDong, 'hoatDong')}, doanh thu ${formatValue(performer.doanhThu, 'doanhThu')}`
+                                        `${performer.name}: hoạt động ${formatValue(performer.activities_count, 'activities_count')}, doanh thu ${formatValue(performer.revenue, 'revenue')}`
                                     )
                                 }
                             >
-                                {formatValue(performer.doanhThu, 'doanhThu')}
+                                {formatValue(performer.revenue, 'revenue')}
                             </div>
                         </div>
                     );

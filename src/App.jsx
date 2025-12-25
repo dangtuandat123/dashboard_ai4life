@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { ArrowUp, Bot, Moon, Sparkles, Sun, X } from 'lucide-react';
 import { useDashboardData } from './data/mockData.jsx';
+import { useFilter } from './contexts/FilterContext';
 import PYPPerformance from './components/PYPPerformance';
 import SalesPipeline from './components/SalesPipeline';
 import TopPerformersHeatmap from './components/TopPerformersHeatmap';
@@ -10,6 +11,7 @@ import KenhBanHang from './components/KenhBanHang';
 import DoanhThuSanPham from './components/DoanhThuSanPham';
 import SoLuongBan from './components/SoLuongBan';
 import LoiNhuanRong from './components/LoiNhuanRong';
+import DashboardFilter from './components/DashboardFilter';
 
 function App() {
     const [theme, setTheme] = useState(() => {
@@ -65,10 +67,19 @@ function App() {
     } = useDashboardData();
 
     // Use real data or fallback to default values
+    const { filters } = useFilter();
     const pypData = pypPerformance.data || [];
     const pipelineData = pipelineStages.data || [];
 
-    const currentMonth = pypData[pypData.length - 1] || { actual: 0, target: 0, month: 'T12' };
+    const currentMonth = useMemo(() => {
+        if (filters.month !== 'all') {
+            return pypData.find(d => d.month === Number(filters.month)) || { actual: 0, target: 0, month: filters.month };
+        }
+        // Aggregate for full year
+        const totalActual = pypData.reduce((sum, d) => sum + (Number(d.actual) || 0), 0);
+        const totalTarget = pypData.reduce((sum, d) => sum + (Number(d.target) || 0), 0);
+        return { actual: totalActual, target: totalTarget, month: 'Cả năm' };
+    }, [pypData, filters.month]);
     const kpiCompletion = currentMonth.target > 0
         ? Math.round((currentMonth.actual / currentMonth.target) * 100)
         : 0;
@@ -451,8 +462,9 @@ function App() {
                     <div className="flex items-center gap-2 flex-wrap justify-end">
                         <div className="frosted-pill">
                             <span className="status-dot" />
-                            Tháng {currentMonth.month}, {new Date().getFullYear()}
+                            {filters.month !== 'all' ? `Tháng ${filters.month}` : 'Cả năm'}, {filters.year}
                         </div>
+                        <DashboardFilter />
                         <button
                             onClick={toggleTheme}
                             className="theme-toggle"
@@ -494,7 +506,7 @@ function App() {
                                     )
                                 }
                             >
-                                <p className="text-[10px] text-emerald-400 uppercase tracking-[0.12em]">KPI tháng</p>
+                                <p className="text-[10px] text-emerald-400 uppercase tracking-[0.12em]">{filters.month !== 'all' ? 'KPI tháng' : 'KPI năm'}</p>
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-2xl font-bold text-white">{formatCurrency(currentMonth.actual).value}</span>
                                     <span className="text-sm text-slate-300 ml-1">{formatCurrency(currentMonth.actual).unit}</span>

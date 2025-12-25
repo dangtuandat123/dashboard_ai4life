@@ -1,0 +1,367 @@
+# BEEBOX INTELLIGENCE - TÀI LIỆU CẤU TRÚC DATABASE (V5.0)
+
+## 1. Tổng quan
+Database này được thiết kế cho Hệ thống Quản lý Bảo hiểm (BEEBOX Intelligence). Nó quản lý toàn bộ vòng đời hoạt động bảo hiểm, từ lập kế hoạch ngân sách, chiến dịch marketing đến quy trình bán hàng (pipeline), quản lý hợp đồng (policy) và theo dõi tài chính.
+
+**Điểm nổi bật:**
+- **Cấu hình động**: Không hardcode giá trị; sử dụng bảng `system_config` và các bảng cấu hình.
+- **Thiết kế chuẩn hóa**: Tuân thủ chuẩn 3NF để đảm bảo toàn vẹn dữ liệu.
+- **Views toàn diện**: Các view được tính toán sẵn cho KPIs, ROI và phân tích hiệu suất.
+- **Bảo mật**: Row Level Security (RLS) được TẮT (DISABLED) để cho phép truy cập API thoải mái.
+
+---
+
+## 2. Danh sách Bảng (23 Bảng)
+
+### 2.1. Cấu hình Hệ thống
+#### `system_config`
+Lưu trữ các cài đặt toàn cục của hệ thống để tránh hardcode trong ứng dụng.
+- **`config_id`** (SERIAL, PK): Định danh duy nhất.
+- **`config_key`** (VARCHAR(100), NOT NULL, UNIQUE): Khóa cài đặt (ví dụ: 'roi_window_months').
+- **`config_value`** (VARCHAR(255), NOT NULL): Giá trị cài đặt.
+- **`description`** (TEXT): Mô tả ý nghĩa của cài đặt này.
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+
+### 2.2. Tổ chức & Nhân sự
+#### `department`
+Các phòng ban trong tổ chức.
+- **`department_id`** (SERIAL, PK): Định danh duy nhất.
+- **`department_name`** (TEXT, NOT NULL): Tên phòng ban (ví dụ: Sales, Marketing).
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+
+#### `employee`
+Nhân viên và vai trò của họ.
+- **`employee_id`** (SERIAL, PK): Định danh duy nhất.
+- **`full_name`** (TEXT, NOT NULL): Họ tên đầy đủ.
+- **`email`** (TEXT, UNIQUE): Email công việc.
+- **`department_id`** (INTEGER, FK -> `department`): Phòng ban trực thuộc.
+- **`manager_id`** (INTEGER, FK -> `employee`): Người quản lý trực tiếp.
+- **`role`** (TEXT, CHECK): Vai trò ('Sales', 'Sales_Manager', 'Marketing_Staff', 'Finance_Controller', 'Admin').
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+
+### 2.3. Ngân sách & Kế hoạch
+#### `annual_budget`
+Ngân sách được phân bổ cho các phòng ban theo năm.
+- **`annual_budget_id`** (SERIAL, PK): Định danh duy nhất.
+- **`department_id`** (INTEGER, FK -> `department`): Phòng ban sở hữu ngân sách.
+- **`year`** (INTEGER, NOT NULL): Năm tài chính.
+- **`category`** (TEXT, NOT NULL): Hạng mục ngân sách.
+- **`total_amount`** (NUMERIC(19,2), NOT NULL): Tổng số tiền được cấp.
+- **`amount_spent`** (NUMERIC(19,2), DEFAULT 0): Số tiền đã chi (tự động cập nhật qua trigger).
+- **`amount_remaining`** (NUMERIC(19,2), GENERATED ALWAYS AS total_amount - amount_spent STORED): Số tiền còn lại.
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+
+#### `request`
+Các yêu cầu chi ngân sách cho hoạt động/chiến dịch cụ thể.
+- **`request_id`** (SERIAL, PK): Định danh duy nhất.
+- **`request_code`** (TEXT, NOT NULL, UNIQUE): Mã định danh (ví dụ: REQ-2024-001).
+- **`title`** (TEXT, NOT NULL): Tiêu đề yêu cầu.
+- **`requester_id`** (INTEGER, FK -> `employee`): Người tạo yêu cầu.
+- **`department_id`** (INTEGER, FK -> `department`): Phòng ban chịu phí.
+- **`description`** (TEXT): Chi tiết yêu cầu.
+- **`status`** (TEXT, CHECK): Trạng thái ('Draft', 'Pending', 'Approved', 'Rejected', 'Completed').
+- **`event_date`** (TIMESTAMP): Ngày diễn ra sự kiện.
+- **`total_estimated_amount`** (NUMERIC(19,2), DEFAULT 0): Tổng chi phí dự kiến (tổng các budget items).
+- **`annual_budget_id`** (INTEGER, FK -> `annual_budget`): Nguồn ngân sách.
+- **`campaign_id`** (INTEGER, FK -> `campaign`): Liên kết với chiến dịch marketing.
+- **`campaign_code`** (VARCHAR(100)): Mã chiến dịch (lưu dư thừa để tra cứu nhanh).
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+
+#### `budget_item`
+Các hạng mục chi tiết trong một yêu cầu ngân sách.
+- **`item_id`** (SERIAL, PK): Định danh duy nhất.
+- **`request_id`** (INTEGER, FK -> `request`, ON DELETE CASCADE): Yêu cầu cha.
+- **`item_name`** (TEXT, NOT NULL): Tên hạng mục.
+- **`description`** (TEXT): Mô tả chi tiết.
+- **`requested_amount`** (NUMERIC(19,2), NOT NULL): Số tiền yêu cầu.
+- **`vendor_quote_link`** (TEXT): Link báo giá của nhà cung cấp.
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+
+#### `document`
+Tài liệu đính kèm cho yêu cầu.
+- **`document_id`** (SERIAL, PK): Định danh duy nhất.
+- **`request_id`** (INTEGER, FK -> `request`, ON DELETE CASCADE): Yêu cầu cha.
+- **`file_name`** (TEXT, NOT NULL): Tên file gốc.
+- **`file_path`** (TEXT, NOT NULL): Đường dẫn/URL lưu trữ.
+- **`uploaded_by_id`** (INTEGER, FK -> `employee`): Người upload.
+- **`upload_timestamp`** (TIMESTAMP, DEFAULT NOW()): Thời gian upload.
+
+#### `approval_workflow`
+Theo dõi quy trình phê duyệt các yêu cầu.
+- **`step_id`** (SERIAL, PK): Định danh duy nhất.
+- **`request_id`** (INTEGER, FK -> `request`, ON DELETE CASCADE): Yêu cầu cha.
+- **`step_number`** (INTEGER, NOT NULL): Số thứ tự bước duyệt.
+- **`approver_id`** (INTEGER, FK -> `employee`): Người duyệt được chỉ định.
+- **`status`** (TEXT, CHECK): Trạng thái ('Pending', 'Approved', 'Rejected', 'Skipped').
+- **`comment`** (TEXT): Ghi chú của người duyệt.
+- **`action_timestamp`** (TIMESTAMP): Thời gian thực hiện hành động.
+- **`created_at`** (TIMESTAMP): Thời gian tạo.
+- **UNIQUE(request_id, step_number)**: Ràng buộc duy nhất.
+
+### 2.4. Marketing & Chiến dịch
+#### `campaign`
+Các chiến dịch marketing nhằm thúc đẩy doanh số.
+- **`campaign_id`** (SERIAL, PK): Định danh duy nhất.
+- **`campaign_code`** (VARCHAR(100), NOT NULL, UNIQUE): Mã chiến dịch (ví dụ: SUMMER_2024).
+- **`campaign_name`** (VARCHAR(255), NOT NULL): Tên chiến dịch.
+- **`description`** (TEXT): Mô tả.
+- **`start_date`**, **`end_date`** (DATE): Thời gian diễn ra.
+- **`status`** (VARCHAR(50), CHECK, DEFAULT 'Draft'): Trạng thái ('Draft', 'Active', 'Completed', 'Cancelled').
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+
+### 2.5. Sales Pipeline & CRM
+#### `pipeline_stage_config`
+Cấu hình các giai đoạn trong phễu bán hàng.
+- **`stage_id`** (SERIAL, PK): Định danh duy nhất.
+- **`stage_name`** (VARCHAR(50), NOT NULL, UNIQUE): Tên giai đoạn (ví dụ: 'Leads mới', 'Đang tư vấn').
+- **`stage_order`** (INTEGER, NOT NULL, UNIQUE): Thứ tự trong phễu.
+- **`color`** (VARCHAR(20), NOT NULL, DEFAULT '#9ca3af'): Mã màu hiển thị.
+- **`is_active`** (BOOLEAN, DEFAULT TRUE): Cờ kích hoạt.
+- **`created_at`** (TIMESTAMP): Thời gian tạo.
+
+#### `sales_channel_config`
+Các kênh bán hàng (nguồn khách hàng).
+- **`channel_id`** (SERIAL, PK): Định danh duy nhất.
+- **`channel_name`** (VARCHAR(50), NOT NULL, UNIQUE): Tên kênh (ví dụ: 'Hội thảo', 'Referral').
+- **`color`** (VARCHAR(20), NOT NULL, DEFAULT '#6b7280'): Mã màu hiển thị.
+- **`created_at`** (TIMESTAMP): Thời gian tạo.
+
+#### `party`
+Khách hàng, Khách hàng tiềm năng (Leads) và các đối tượng khác.
+- **`party_id`** (SERIAL, PK): Định danh duy nhất.
+- **`name`** (VARCHAR(255), NOT NULL): Họ tên đầy đủ.
+- **`date_of_birth`** (DATE): Ngày sinh.
+- **`gender`** (gender_enum): Giới tính ('Male', 'Female', 'Other').
+- **`citizen_id`** (VARCHAR(20)): CMND/CCCD/Hộ chiếu.
+- **`location`** (VARCHAR(255)): Tỉnh/Thành phố.
+- **`phone_number`** (VARCHAR(20)): Số điện thoại.
+- **`email`** (VARCHAR(255)): Email.
+- **`role`** (VARCHAR(50), CHECK): Vai trò ('Customer', 'Lead', 'Partner', 'Beneficiary', 'Insured', 'Owner', 'Agent').
+- **`pipeline_stage_id`** (INTEGER, FK -> `pipeline_stage_config`): Giai đoạn hiện tại trong phễu.
+- **`sales_channel_id`** (INTEGER, FK -> `sales_channel_config`): Kênh nguồn.
+- **`assigned_to`** (INTEGER, FK -> `employee`): Nhân viên kinh doanh phụ trách.
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+
+#### `activity`
+Các tương tác với khách hàng.
+- **`activity_id`** (SERIAL, PK): Định danh duy nhất.
+- **`employee_id`** (INTEGER, NOT NULL, FK -> `employee`): Người thực hiện.
+- **`party_id`** (INTEGER, FK -> `party`): Khách hàng liên quan.
+- **`activity_type`** (VARCHAR(50), NOT NULL, CHECK): Loại tương tác ('Call', 'Meeting', 'Email', 'Presentation', 'Follow-up', 'Site Visit', 'Other').
+- **`activity_date`** (TIMESTAMP, NOT NULL, DEFAULT NOW()): Thời gian thực hiện.
+- **`notes`** (TEXT): Ghi chú chi tiết.
+- **`outcome`** (VARCHAR(50)): Kết quả.
+- **`next_action_date`** (TIMESTAMP): Lịch hẹn tiếp theo.
+- **`created_at`** (TIMESTAMP): Thời gian tạo.
+
+#### `pipeline_history`
+Lịch sử chuyển đổi giai đoạn của khách hàng (dùng cho phân tích Phễu).
+- **`history_id`** (SERIAL, PK): Định danh duy nhất.
+- **`party_id`** (INTEGER, NOT NULL, FK -> `party`): Khách hàng.
+- **`from_stage_id`** (INTEGER, FK -> `pipeline_stage_config`): Giai đoạn cũ.
+- **`to_stage_id`** (INTEGER, FK -> `pipeline_stage_config`): Giai đoạn mới.
+- **`changed_by`** (INTEGER, FK -> `employee`): Người thay đổi.
+- **`changed_at`** (TIMESTAMP, DEFAULT NOW()): Thời gian thay đổi.
+- **`notes`** (TEXT): Ghi chú.
+
+### 2.6. Sản phẩm & Mục tiêu
+#### `product_category`
+Nhóm sản phẩm cấp cao (ví dụ: 'Nhân thọ', 'Sức khỏe').
+- **`category_id`** (SERIAL, PK): Định danh duy nhất.
+- **`category_name`** (VARCHAR(100), NOT NULL, UNIQUE): Tên nhóm.
+- **`description`** (TEXT): Mô tả.
+- **`created_at`** (TIMESTAMP): Thời gian tạo.
+
+#### `product_type`
+Loại sản phẩm cụ thể trong nhóm (ví dụ: 'Bảo hiểm tử kỳ', 'Trọn đời').
+- **`type_id`** (SERIAL, PK): Định danh duy nhất.
+- **`category_id`** (INTEGER, FK -> `product_category`): Nhóm cha.
+- **`type_name`** (VARCHAR(100), NOT NULL): Tên loại.
+- **`description`** (TEXT): Mô tả.
+- **`created_at`** (TIMESTAMP): Thời gian tạo.
+- **UNIQUE(category_id, type_name)**: Ràng buộc duy nhất.
+
+#### `product`
+Sản phẩm bảo hiểm cụ thể để bán.
+- **`product_id`** (SERIAL, PK): Định danh duy nhất.
+- **`product_code`** (VARCHAR(50), NOT NULL, UNIQUE): Mã sản phẩm.
+- **`product_name`** (VARCHAR(255), NOT NULL): Tên thương mại.
+- **`category_id`** (INTEGER, FK -> `product_category`): Nhóm.
+- **`type_id`** (INTEGER, FK -> `product_type`): Loại.
+- **`status`** (VARCHAR(50), NOT NULL, CHECK): Trạng thái ('Active', 'Discontinued').
+- **`issue_date`** (DATE, NOT NULL): Ngày bắt đầu mở bán.
+- **`end_date`** (DATE): Ngày kết thúc mở bán.
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+
+#### `sales_target`
+Mục tiêu doanh số hàng tháng.
+- **`target_id`** (SERIAL, PK): Định danh duy nhất.
+- **`category_id`** (INTEGER, NOT NULL, FK -> `product_category`): Mục tiêu cho nhóm.
+- **`type_id`** (INTEGER, FK -> `product_type`): Mục tiêu cho loại (tùy chọn, NULL cho mục tiêu cấp category).
+- **`year`** (INTEGER, NOT NULL): Năm áp dụng.
+- **`month`** (INTEGER, NOT NULL, CHECK 1-12): Tháng áp dụng.
+- **`target_amount`** (NUMERIC(19,2), NOT NULL, DEFAULT 0): Doanh thu mục tiêu.
+- **`target_quantity`** (INTEGER, DEFAULT 0): Số lượng hợp đồng mục tiêu.
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+- **UNIQUE INDEX (category_id, year, month) WHERE type_id IS NULL**: Cho mục tiêu cấp category.
+- **UNIQUE INDEX (category_id, type_id, year, month) WHERE type_id IS NOT NULL**: Cho mục tiêu cấp type.
+
+### 2.7. Quản lý Hợp đồng (Cốt lõi)
+#### `policy`
+Hợp đồng bảo hiểm.
+- **`policy_id`** (SERIAL, PK): Định danh duy nhất.
+- **`policy_number`** (VARCHAR(50), NOT NULL, UNIQUE): Số hợp đồng.
+- **`party_id`** (INTEGER, NOT NULL, FK -> `party`): Chủ hợp đồng.
+- **`salesperson_id`** (INTEGER, FK -> `employee`): Nhân viên bán.
+- **`effective_date`** (TIMESTAMP, NOT NULL): Ngày hiệu lực.
+- **`expiration_date`** (TIMESTAMP): Ngày hết hạn.
+- **`status`** (VARCHAR(50), NOT NULL, CHECK): Trạng thái ('Pending', 'Active', 'Cancelled', 'Expired', 'Lapsed').
+- **`premium_due_date`** (TIMESTAMP): Ngày đến hạn đóng phí.
+- **`campaign_id`** (INTEGER, FK -> `campaign`): Chiến dịch nguồn.
+- **`campaign_code`** (VARCHAR(100)): Mã chiến dịch (lưu dư thừa, auto-sync từ campaign_id).
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+
+#### `coverage`
+Quyền lợi bảo hiểm cụ thể trong hợp đồng.
+- **`coverage_id`** (SERIAL, PK): Định danh duy nhất.
+- **`policy_id`** (INTEGER, NOT NULL, FK -> `policy`): Hợp đồng cha.
+- **`party_id`** (INTEGER, NOT NULL, FK -> `party`): Người được bảo hiểm (phải khớp chủ hợp đồng).
+- **`product_id`** (INTEGER, NOT NULL, FK -> `product`): Sản phẩm được bảo hiểm.
+- **`sum_assured`** (NUMERIC(19,2), NOT NULL): Số tiền bảo hiểm.
+- **`premium_amount`** (NUMERIC(19,2)): Phí bảo hiểm cho quyền lợi này.
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+
+#### `claim`
+Yêu cầu bồi thường.
+- **`claim_id`** (SERIAL, PK): Định danh duy nhất.
+- **`coverage_id`** (INTEGER, NOT NULL, FK -> `coverage`): Quyền lợi liên quan.
+- **`event_date`** (TIMESTAMP): Ngày xảy ra sự kiện bảo hiểm.
+- **`request_date`** (TIMESTAMP, NOT NULL): Ngày nộp yêu cầu.
+- **`claim_status`** (VARCHAR(50), NOT NULL, CHECK): Trạng thái ('Submitted', 'In Review', 'Pending Info', 'Approved', 'Rejected', 'Paid').
+- **`requested_amount`** (NUMERIC(19,2)): Số tiền yêu cầu.
+- **`approved_amount`** (NUMERIC(19,2)): Số tiền được duyệt.
+- **`description`** (TEXT): Mô tả sự kiện.
+- **`payment_date`** (TIMESTAMP): Ngày chi trả.
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+
+#### `transaction`
+Giao dịch tài chính (Thu/Chi).
+- **`transaction_id`** (SERIAL, PK): Định danh duy nhất.
+- **`policy_id`** (INTEGER, FK -> `policy`): Hợp đồng liên quan.
+- **`claim_id`** (INTEGER, FK -> `claim`): Yêu cầu bồi thường liên quan (nếu là chi trả).
+- **`transaction_type`** (VARCHAR(50), NOT NULL, CHECK): Loại giao dịch ('Premium Payment', 'Claim Payout', 'Commission', 'Refund', 'Maturity Benefit').
+- **`amount`** (NUMERIC(19,2), NOT NULL): Số tiền.
+- **`transaction_date`** (TIMESTAMP, NOT NULL): Ngày giao dịch.
+- **`is_cost`** (BOOLEAN, DEFAULT FALSE): True nếu là chi phí (Claim Payout, Commission, Refund, Maturity Benefit), False nếu là doanh thu (Premium Payment). Auto-set bởi trigger.
+- **`created_at`** (TIMESTAMP): Thời gian tạo.
+
+#### `policy_rule`
+Quy tắc nghiệp vụ (Legacy/Config).
+- **`rule_id`** (SERIAL, PK): Định danh duy nhất.
+- **`rule_name`** (TEXT, NOT NULL, UNIQUE): Tên quy tắc.
+- **`rule_value`** (NUMERIC): Giá trị.
+- **`description`** (TEXT): Mô tả.
+- **`created_at`**, **`updated_at`** (TIMESTAMP): Thời gian tạo/cập nhật.
+
+---
+
+## 3. Danh sách Views (11 Views)
+
+### 3.1. `v_pipeline_stages`
+- **Cột**: `id` (INT), `label` (VARCHAR), `count` (BIGINT), `color` (VARCHAR), `year` (INT), `month` (INT)
+- **Mục đích**: Đếm số lượng leads trong mỗi giai đoạn phễu theo từng tháng.
+- **Logic**: Kết hợp bảng cấu hình giai đoạn (`pipeline_stage_config`) với bảng `party`, nhóm theo năm/tháng.
+
+### 3.2. `v_top_performers_heatmap`
+- **Cột**: `name` (TEXT), `leads_count` (BIGINT), `activities_count` (BIGINT), `revenue` (NUMERIC), `year` (INT), `month` (INT)
+- **Mục đích**: Chi tiết hiệu suất của từng nhân viên theo tháng.
+- **Logic**: Tổng hợp Doanh thu (`transaction`), Số lượng Leads (`party`), và Hoạt động (`activity`) cho mỗi nhân viên.
+
+### 3.3. `v_top_performers_list`
+- **Cột**: `rank` (BIGINT), `name` (TEXT), `revenue` (NUMERIC), `avatar` (TEXT), `year` (INT), `month` (INT)
+- **Mục đích**: Bảng xếp hạng nhân viên kinh doanh xuất sắc nhất theo doanh thu.
+- **Logic**: Xếp hạng nhân viên dựa trên tổng doanh thu (`transaction` với `is_cost=false`) theo tháng.
+
+### 3.4. `v_financial_data`
+- **Cột**: `year` (INT), `month` (INT), `month_label` (TEXT), `revenue` (NUMERIC), `cost` (NUMERIC)
+- **Mục đích**: Tổng quan Doanh thu vs Chi phí hàng tháng.
+- **Logic**: Tổng hợp từ bảng `transaction`.
+  - Doanh thu = Tổng `amount` khi `is_cost = false`
+  - Chi phí = Tổng `amount` khi `is_cost = true`
+
+### 3.5. `v_sales_channels`
+- **Cột**: `channel` (VARCHAR), `value` (BIGINT), `color` (VARCHAR), `year` (INT), `month` (INT)
+- **Mục đích**: Hiệu quả của các kênh bán hàng.
+- **Logic**: Đếm số lượng hợp đồng (`policy`) bán được qua từng kênh theo tháng.
+
+### 3.6. `v_product_lines`
+- **Cột**: `id` (BIGINT), `name` (VARCHAR), `revenue` (NUMERIC), `target` (NUMERIC), `isHighlight` (BOOLEAN), `year` (INT), `month` (INT)
+- **Mục đích**: Doanh thu theo Nhóm sản phẩm (Cấp cao).
+- **Logic**: Tổng hợp phí bảo hiểm (`coverage.premium_amount`) nhóm theo `product_category`. So sánh với `sales_target`.
+
+### 3.7. `v_product_types`
+- **Cột**: `category` (VARCHAR), `name` (VARCHAR), `revenue` (NUMERIC), `target` (NUMERIC), `year` (INT), `month` (INT)
+- **Mục đích**: Doanh thu theo Loại sản phẩm (Chi tiết).
+- **Logic**: Tổng hợp phí bảo hiểm nhóm theo `product_type`. So sánh với `sales_target`.
+
+### 3.8. `v_sales_quantity`
+- **Cột**: `type` (VARCHAR), `sold` (BIGINT), `target` (INTEGER), `year` (INT), `month` (INT)
+- **Mục đích**: Số lượng hợp đồng bán được theo Loại sản phẩm.
+- **Logic**: Đếm số lượng quyền lợi (`coverage`) bán được theo loại theo tháng.
+
+### 3.9. `v_kpis_summary`
+- **Cột**: `total_revenue` (NUMERIC), `total_policies_sold` (BIGINT), `active_pipeline` (BIGINT), `conversion_rate_percent` (NUMERIC), `year` (INT), `month` (INT)
+- **Mục đích**: Các chỉ số KPI chính trên Dashboard.
+- **Logic**:
+  - **total_revenue**: Tổng phí bảo hiểm từ coverage.
+  - **total_policies_sold**: Đếm số hợp đồng duy nhất.
+  - **active_pipeline**: Đếm số leads có cập nhật trong X ngày gần nhất (lấy từ `system_config.pipeline_active_days`).
+  - **conversion_rate_percent**: % số party chuyển thành 'Customer'.
+
+### 3.10. `v_campaign_roi`
+- **Cột**: `campaign_code` (VARCHAR), `campaign_name` (VARCHAR), `cost` (NUMERIC), `revenue` (NUMERIC), `policies_sold` (BIGINT), `roi_percent` (NUMERIC), `year` (DOUBLE PRECISION), `month` (DOUBLE PRECISION)
+- **Mục đích**: Tỷ suất hoàn vốn (ROI) của các Chiến dịch Marketing.
+- **Logic**:
+  - **cost**: Tổng `request.total_estimated_amount` (Approved/Completed) thuộc chiến dịch.
+  - **revenue**: Tổng `transaction.amount` (Doanh thu) từ các hợp đồng thuộc chiến dịch.
+  - **roi_percent**: (Revenue - Cost) / Cost * 100.
+
+### 3.11. `v_pipeline_funnel`
+- **Cột**: `from_stage` (VARCHAR), `to_stage` (VARCHAR), `transition_count` (BIGINT), `avg_days` (NUMERIC), `year` (DOUBLE PRECISION), `month` (DOUBLE PRECISION)
+- **Mục đích**: Phân tích phễu chuyển đổi (Funnel Analysis).
+- **Logic**: Sử dụng `pipeline_history` để tính số lượng chuyển đổi và thời gian trung bình nằm ở mỗi giai đoạn.
+
+---
+
+## 4. Mối quan hệ chính (ERD)
+- **Tổ chức**: `department` (1) -- (N) `employee` (1) -- (N) `request` / `party` / `policy`.
+- **Ngân sách**: `annual_budget` (1) -- (N) `request` (1) -- (N) `budget_item`.
+- **Chiến dịch**: `campaign` (1) -- (N) `request` (Chi phí) / `policy` (Doanh thu).
+- **Sản phẩm**: `product_category` (1) -- (N) `product_type` (1) -- (N) `product`.
+- **Bán hàng**: `party` (1) -- (N) `policy` (1) -- (N) `coverage` -- (N) `claim`.
+- **Tài chính**: `policy` (1) -- (N) `transaction`.
+
+---
+
+## 5. Bảo mật
+- **Row Level Security (RLS)**: **ĐÃ TẮT (DISABLED)** cho tất cả các bảng.
+- **Permissions**: Đã cấp quyền `GRANT SELECT, INSERT, UPDATE, DELETE` cho Tables và `GRANT SELECT` cho Views đối với các roles `anon`, `authenticated`, `service_role` để đảm bảo API truy cập được dữ liệu.
+
+---
+
+## 6. Triggers quan trọng
+- **trg_budget_item_update**: Tự động cập nhật `request.total_estimated_amount` khi thêm/sửa/xóa `budget_item`.
+- **trg_request_budget_update**: Tự động cập nhật `annual_budget.amount_spent` khi request được Approved/Rejected.
+- **trg_request_campaign_sync** / **trg_policy_campaign_sync**: Tự động sync `campaign_code` từ `campaign_id`.
+- **trg_transaction_is_cost**: Tự động set `is_cost` dựa trên `transaction_type`.
+- **trg_pipeline_history**: Tự động ghi lịch sử khi `party.pipeline_stage_id` thay đổi.
+- **trg_coverage_party_check**: Đảm bảo `coverage.party_id` khớp với `policy.party_id`.
+- **trg_product_hierarchy_check**: Đảm bảo `product.type_id` thuộc về `product.category_id`.
+- **trg_sales_target_hierarchy_check**: Đảm bảo `sales_target.type_id` thuộc về `sales_target.category_id`.
+
+---
+
+## 7. Helper Functions
+- **get_config(p_key VARCHAR)**: Lấy giá trị cấu hình từ `system_config`.
+- **get_min_date()**: Lấy ngày nhỏ nhất từ dữ liệu (cho dynamic month_dim trong views).
+- **get_max_date()**: Lấy ngày lớn nhất từ dữ liệu (cho dynamic month_dim trong views).

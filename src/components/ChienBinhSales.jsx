@@ -65,7 +65,7 @@ const ChienBinhSales = () => {
 
                     return (
                         <div
-                            key={performer.rank}
+                            key={performer.name}
                             className={`flex items-center gap-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all hover:scale-[1.01] cursor-pointer border backdrop-blur-md ${style.border} ${performer.rank === 1 ? 'bg-yellow-500/5' : ''}`}
                             onClick={() =>
                                 firePrompt(

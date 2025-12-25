@@ -49,7 +49,7 @@ const LoiNhuanRong = () => {
 
             <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={data} margin={{ top: 20, right: 0, left: -10, bottom: 0 }}>
+                    <ComposedChart key={JSON.stringify(data)} data={data} margin={{ top: 20, right: 0, left: -10, bottom: 0 }}>
                         <defs>
                             <linearGradient id="gradProfit" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />

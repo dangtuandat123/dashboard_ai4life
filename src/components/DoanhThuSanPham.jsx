@@ -36,8 +36,18 @@ const DoanhThuSanPham = () => {
         });
     }, [linesData.data, typesData.data]);
 
-    const [activeLineId, setActiveLineId] = useState(productLines[0]?.id || 1);
-    const activeLine = useMemo(() => productLines.find((line) => line.id === activeLineId), [activeLineId, productLines]);
+    const [activeLineName, setActiveLineName] = useState(null);
+
+    // Reset active line when data changes (e.g. filter change)
+    React.useEffect(() => {
+        if (productLines.length > 0) {
+            setActiveLineName(productLines[0].name);
+        } else {
+            setActiveLineName(null);
+        }
+    }, [productLines]);
+
+    const activeLine = useMemo(() => productLines.find((line) => line.name === activeLineName) || productLines[0], [activeLineName, productLines]);
 
     const sortedProductTypes = useMemo(() => {
         const types = activeLine?.productTypes || [];
@@ -59,7 +69,7 @@ const DoanhThuSanPham = () => {
         [productLines]
     );
 
-    const overallPercent = Math.round((totalRevenue / totalTarget) * 100);
+    const overallPercent = totalTarget > 0 ? Math.round((totalRevenue / totalTarget) * 100) : 0;
     const activePercent = activeLine ? Math.round((activeLine.revenue / activeLine.target) * 100) : 0;
 
     // Donut chart calculation
@@ -127,18 +137,18 @@ const DoanhThuSanPham = () => {
                     </div>
                     <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-1.5">
                         {productLines.slice(0, 7).map((line) => {
-                            const percentage = Math.round((line.revenue / line.target) * 100);
-                            const isActive = line.id === activeLineId;
+                            const percentage = line.target > 0 ? Math.round((line.revenue / line.target) * 100) : 0;
+                            const isActive = line.name === activeLineName;
                             const isMetKPI = percentage >= 100;
 
                             return (
                                 <button
-                                    key={line.id}
+                                    key={line.name}
                                     onClick={() => {
-                                        setActiveLineId(line.id);
+                                        setActiveLineName(line.name);
                                         firePrompt(
                                             'Doanh thu theo dòng sản phẩm',
-                                            `${line.name}: đạt ${formatVietnameseNumber(line.revenue)} / mục tiêu ${formatVietnameseNumber(line.target)}, tiến độ ${Math.round((line.revenue / line.target) * 100)}%`
+                                            `${line.name}: đạt ${formatVietnameseNumber(line.revenue)} / mục tiêu ${formatVietnameseNumber(line.target)}, tiến độ ${percentage}%`
                                         );
                                     }}
                                     className={`w-full text-left rounded-lg p-2 transition-all duration-300 border relative overflow-hidden group ${isActive

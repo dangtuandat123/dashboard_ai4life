@@ -38,7 +38,7 @@ const KenhBanHang = () => {
                             onClick={() =>
                                 firePrompt(
                                     'Kênh bán hàng',
-                                    `${channel.channel}: ${formatVietnameseNumber(channel.value)} (${percentage}%) trên tổng ${formatVietnameseNumber(totalValue)}. Hãy đánh giá hiệu quả kênh này và đề xuất tối ưu.`
+                                    `${channel.channel}: ${formatVietnameseNumber(channel.value)} hợp đồng (${percentage}%) trên tổng ${formatVietnameseNumber(totalValue)}. Hãy đánh giá hiệu quả kênh này và đề xuất tối ưu.`
                                 )
                             }
                         >

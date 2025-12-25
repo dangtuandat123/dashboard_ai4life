@@ -1,0 +1,102 @@
+BEEBOX DATABASE SCHEMA V5
+
+=== TABLES (23) ===
+
+system_config: config_id PK, config_key VARCHAR(100) UNIQUE NOT NULL, config_value VARCHAR(255) NOT NULL, description TEXT
+
+department: department_id PK, department_name TEXT NOT NULL
+
+employee: employee_id PK, full_name TEXT NOT NULL, email TEXT UNIQUE, department_id FK, manager_id FK, role TEXT CHECK('Sales','Sales_Manager','Marketing_Staff','Finance_Controller','Admin')
+
+annual_budget: annual_budget_id PK, department_id FK, year INT NOT NULL, category TEXT NOT NULL, total_amount NUMERIC(19,2) NOT NULL, amount_spent NUMERIC(19,2) DEFAULT 0, amount_remaining NUMERIC(19,2) GENERATED
+
+request: request_id PK, request_code TEXT UNIQUE NOT NULL, title TEXT NOT NULL, requester_id FK, department_id FK, description TEXT, status TEXT CHECK('Draft','Pending','Approved','Rejected','Completed'), event_date TIMESTAMP, total_estimated_amount NUMERIC(19,2) DEFAULT 0, annual_budget_id FK, campaign_id FK, campaign_code VARCHAR(100)
+
+budget_item: item_id PK, request_id FK CASCADE, item_name TEXT NOT NULL, description TEXT, requested_amount NUMERIC(19,2) NOT NULL, vendor_quote_link TEXT
+
+document: document_id PK, request_id FK CASCADE, file_name TEXT NOT NULL, file_path TEXT NOT NULL, uploaded_by_id FK, upload_timestamp TIMESTAMP
+
+approval_workflow: step_id PK, request_id FK CASCADE, step_number INT NOT NULL, approver_id FK, status TEXT CHECK('Pending','Approved','Rejected','Skipped'), comment TEXT, action_timestamp TIMESTAMP, UNIQUE(request_id,step_number)
+
+campaign: campaign_id PK, campaign_code VARCHAR(100) UNIQUE NOT NULL, campaign_name VARCHAR(255) NOT NULL, description TEXT, start_date DATE, end_date DATE, status VARCHAR(50) CHECK('Draft','Active','Completed','Cancelled') DEFAULT 'Draft'
+
+pipeline_stage_config: stage_id PK, stage_name VARCHAR(50) UNIQUE NOT NULL, stage_order INT UNIQUE NOT NULL, color VARCHAR(20) DEFAULT '#9ca3af', is_active BOOL DEFAULT TRUE
+
+sales_channel_config: channel_id PK, channel_name VARCHAR(50) UNIQUE NOT NULL, color VARCHAR(20) DEFAULT '#6b7280'
+
+party: party_id PK, name VARCHAR(255) NOT NULL, date_of_birth DATE, gender gender_enum('Male','Female','Other'), citizen_id VARCHAR(20), location VARCHAR(255), phone_number VARCHAR(20), email VARCHAR(255), role VARCHAR(50) CHECK('Customer','Lead','Partner','Beneficiary','Insured','Owner','Agent'), pipeline_stage_id FK, sales_channel_id FK, assigned_to FK
+
+activity: activity_id PK, employee_id FK NOT NULL, party_id FK, activity_type VARCHAR(50) NOT NULL CHECK('Call','Meeting','Email','Presentation','Follow-up','Site Visit','Other'), activity_date TIMESTAMP NOT NULL, notes TEXT, outcome VARCHAR(50), next_action_date TIMESTAMP
+
+pipeline_history: history_id PK, party_id FK NOT NULL, from_stage_id FK, to_stage_id FK, changed_by FK, changed_at TIMESTAMP, notes TEXT
+
+product_category: category_id PK, category_name VARCHAR(100) UNIQUE NOT NULL, description TEXT
+
+product_type: type_id PK, category_id FK, type_name VARCHAR(100) NOT NULL, description TEXT, UNIQUE(category_id,type_name)
+
+product: product_id PK, product_code VARCHAR(50) UNIQUE NOT NULL, product_name VARCHAR(255) NOT NULL, category_id FK, type_id FK, status VARCHAR(50) NOT NULL CHECK('Active','Discontinued'), issue_date DATE NOT NULL, end_date DATE
+
+sales_target: target_id PK, category_id FK NOT NULL, type_id FK, year INT NOT NULL, month INT NOT NULL CHECK(1-12), target_amount NUMERIC(19,2) NOT NULL DEFAULT 0, target_quantity INT DEFAULT 0
+
+policy: policy_id PK, policy_number VARCHAR(50) UNIQUE NOT NULL, party_id FK NOT NULL, salesperson_id FK, effective_date TIMESTAMP NOT NULL, expiration_date TIMESTAMP, status VARCHAR(50) NOT NULL CHECK('Pending','Active','Cancelled','Expired','Lapsed'), premium_due_date TIMESTAMP, campaign_id FK, campaign_code VARCHAR(100)
+
+coverage: coverage_id PK, policy_id FK NOT NULL, party_id FK NOT NULL, product_id FK NOT NULL, sum_assured NUMERIC(19,2) NOT NULL, premium_amount NUMERIC(19,2)
+
+claim: claim_id PK, coverage_id FK NOT NULL, event_date TIMESTAMP, request_date TIMESTAMP NOT NULL, claim_status VARCHAR(50) NOT NULL CHECK('Submitted','In Review','Pending Info','Approved','Rejected','Paid'), requested_amount NUMERIC(19,2), approved_amount NUMERIC(19,2), description TEXT, payment_date TIMESTAMP
+
+transaction: transaction_id PK, policy_id FK, claim_id FK, transaction_type VARCHAR(50) NOT NULL CHECK('Premium Payment','Claim Payout','Commission','Refund','Maturity Benefit'), amount NUMERIC(19,2) NOT NULL, transaction_date TIMESTAMP NOT NULL, is_cost BOOL DEFAULT FALSE (auto-set by trigger)
+
+policy_rule: rule_id PK, rule_name TEXT UNIQUE NOT NULL, rule_value NUMERIC, description TEXT
+
+=== VIEWS (11) - EXACT COLUMNS ===
+
+v_pipeline_stages(id INT, label VARCHAR, count BIGINT, color VARCHAR, year INT, month INT)
+
+v_top_performers_heatmap(name TEXT, leads_count BIGINT, activities_count BIGINT, revenue NUMERIC, year INT, month INT)
+
+v_top_performers_list(rank BIGINT, name TEXT, revenue NUMERIC, avatar TEXT, year INT, month INT)
+
+v_financial_data(year INT, month INT, month_label TEXT, revenue NUMERIC, cost NUMERIC)
+
+v_sales_channels(channel VARCHAR, value BIGINT, color VARCHAR, year INT, month INT)
+
+v_product_lines(id BIGINT, name VARCHAR, revenue NUMERIC, target NUMERIC, isHighlight BOOL, year INT, month INT)
+
+v_product_types(category VARCHAR, name VARCHAR, revenue NUMERIC, target NUMERIC, year INT, month INT)
+
+v_sales_quantity(type VARCHAR, sold BIGINT, target INT, year INT, month INT)
+
+v_kpis_summary(total_revenue NUMERIC, total_policies_sold BIGINT, active_pipeline BIGINT, conversion_rate_percent NUMERIC, year INT, month INT)
+
+v_campaign_roi(campaign_code VARCHAR, campaign_name VARCHAR, cost NUMERIC, revenue NUMERIC, policies_sold BIGINT, roi_percent NUMERIC, year FLOAT, month FLOAT)
+
+v_pipeline_funnel(from_stage VARCHAR, to_stage VARCHAR, transition_count BIGINT, avg_days NUMERIC, year FLOAT, month FLOAT)
+
+=== QUERY EXAMPLES ===
+
+Revenue by product type this year:
+SELECT name, SUM(revenue) AS total FROM v_product_types WHERE year=EXTRACT(YEAR FROM CURRENT_DATE) GROUP BY name ORDER BY total DESC
+
+Top performers this month:
+SELECT name, revenue FROM v_top_performers_list WHERE year=EXTRACT(YEAR FROM CURRENT_DATE) AND month=EXTRACT(MONTH FROM CURRENT_DATE) ORDER BY rank LIMIT 10
+
+Monthly financial trend:
+SELECT month_label, revenue, cost FROM v_financial_data WHERE year=2024 ORDER BY month
+
+KPIs summary:
+SELECT * FROM v_kpis_summary WHERE year=EXTRACT(YEAR FROM CURRENT_DATE) AND month=EXTRACT(MONTH FROM CURRENT_DATE)
+
+=== RELATIONS ===
+department 1--N employee 1--N request/party/policy
+annual_budget 1--N request 1--N budget_item
+campaign 1--N request(cost)/policy(revenue)
+product_category 1--N product_type 1--N product
+party 1--N policy 1--N coverage N--N claim
+policy 1--N transaction
+
+=== KEY TRIGGERS ===
+is_cost auto-set by transaction_type
+campaign_code auto-sync from campaign_id
+amount_spent auto-update when request Approved
+total_estimated_amount auto-sum from budget_items
+pipeline_history auto-record when party.pipeline_stage_id changes

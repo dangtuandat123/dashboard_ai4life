@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell } from 'recharts';
 import { TrendingUp } from 'lucide-react';
@@ -8,10 +9,20 @@ const PYPPerformance = () => {
     const { pypPerformance } = useDashboardData();
     const pypPerformanceData = pypPerformance.data || [];
 
-    // Lấy tháng hiện tại (tháng cuối cùng có dữ liệu)
-    const currentMonth = pypPerformanceData.length > 0
-        ? pypPerformanceData[pypPerformanceData.length - 1]
-        : { actual: 0, target: 1, month: 'T12' };
+    // Calculate summary based on data
+    const currentMonth = React.useMemo(() => {
+        if (pypPerformanceData.length === 0) return { actual: 0, target: 1, month: 'N/A' };
+
+        // If showing full year (more than 1 month of data), aggregate
+        if (pypPerformanceData.length > 1) {
+            const totalActual = pypPerformanceData.reduce((sum, item) => sum + (Number(item.actual) || 0), 0);
+            const totalTarget = pypPerformanceData.reduce((sum, item) => sum + (Number(item.target) || 0), 0);
+            return { actual: totalActual, target: totalTarget, month: 'Cả năm' };
+        }
+
+        // Otherwise show the single month
+        return pypPerformanceData[0];
+    }, [pypPerformanceData]);
 
     const percentageAchieved = currentMonth.target > 0
         ? Math.round((currentMonth.actual / currentMonth.target) * 100)
@@ -44,7 +55,7 @@ const PYPPerformance = () => {
                     </div>
                 </div>
                 <div className="text-right">
-                    <div className={`text-lg font-bold ${percentageAchieved >= 100 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    <div className={`text - lg font - bold ${percentageAchieved >= 100 ? 'text-emerald-400' : 'text-amber-400'} `}>
                         {percentageAchieved}%
                     </div>
                     <div className="text-[9px] text-slate-500 uppercase tracking-wider">Hoàn thành</div>
@@ -54,11 +65,11 @@ const PYPPerformance = () => {
             {/* Progress Bar for Current Month */}
             <div className="relative h-1.5 bg-slate-800 rounded-full overflow-hidden mb-4 border border-white/5">
                 <div
-                    className={`h-full shadow-[0_0_10px_rgba(0,0,0,0.3)] transition-all duration-1000 ${percentageAchieved >= 100
+                    className={`h - full shadow - [0_0_10px_rgba(0, 0, 0, 0.3)] transition - all duration - 1000 ${percentageAchieved >= 100
                             ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
                             : 'bg-gradient-to-r from-amber-500 to-orange-400'
-                        }`}
-                    style={{ width: `${Math.min(percentageAchieved, 100)}%` }}
+                        } `}
+                    style={{ width: `${Math.min(percentageAchieved, 100)}% ` }}
                 />
             </div>
 
@@ -110,7 +121,7 @@ const PYPPerformance = () => {
                                                 </div>
                                                 <div className="pt-1 mt-1 border-t border-slate-800 flex justify-between gap-4 text-[10px]">
                                                     <span className="text-slate-400">Tiến độ:</span>
-                                                    <span className={`${pct >= 100 ? 'text-emerald-400' : 'text-amber-400'} font-bold`}>{pct}%</span>
+                                                    <span className={`${pct >= 100 ? 'text-emerald-400' : 'text-amber-400'} font - bold`}>{pct}%</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -126,13 +137,13 @@ const PYPPerformance = () => {
                             onClick={(data) =>
                                 firePrompt(
                                     'Hiệu suất KPI',
-                                    `Tháng ${data.payload.month}: thực đạt ${formatVietnameseNumber(data.payload.actual)}, mục tiêu ${formatVietnameseNumber(data.payload.target)}`
+                                    `Tháng ${data.payload.month}: thực đạt ${formatVietnameseNumber(data.payload.actual)}, mục tiêu ${formatVietnameseNumber(data.payload.target)} `
                                 )
                             }
                         >
                             {pypPerformanceData.map((entry, index) => (
                                 <Cell
-                                    key={`cell-${index}`}
+                                    key={`cell - ${index} `}
                                     fill={entry.actual >= entry.target ? 'url(#gradSuccess)' : 'url(#gradFail)'}
                                     opacity={1}
                                 />
