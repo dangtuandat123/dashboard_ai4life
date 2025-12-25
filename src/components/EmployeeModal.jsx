@@ -64,6 +64,10 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                 dataQuery = dataQuery.ilike('full_name', `%${search.trim()}%`);
             }
 
+            // Filter only Sales employees (exclude managers and other roles)
+            countQuery = countQuery.eq('role', 'Sales');
+            dataQuery = dataQuery.eq('role', 'Sales');
+
             // Get total count
             const { count } = await countQuery;
             setTotalCount(count || 0);
