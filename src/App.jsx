@@ -40,6 +40,16 @@ function App() {
     const [sendTimer, setSendTimer] = useState(0);
     const [chatMode, setChatMode] = useState('nhanh'); // 'nhanh' | 'suy_luan'
     const [chartHeights, setChartHeights] = useState({});
+    const [analysisStep, setAnalysisStep] = useState(0);
+
+    // Các bước phân tích dữ liệu
+    const analysisSteps = [
+        { icon: '🔍', label: 'Đang phân tích yêu cầu...', color: '#22d3ee' },
+        { icon: '📊', label: 'Truy vấn dữ liệu...', color: '#a855f7' },
+        { icon: '🧮', label: 'Tính toán chỉ số...', color: '#22c55e' },
+        { icon: '📈', label: 'Sinh biểu đồ...', color: '#f59e0b' },
+        { icon: '✨', label: 'Hoàn thiện phản hồi...', color: '#ec4899' }
+    ];
     const [autoSuggestions, setAutoSuggestions] = useState([]);
     const [suggestLoading, setSuggestLoading] = useState(false);
     const [chartFullscreen, setChartFullscreen] = useState({ open: false, html: '' });
@@ -179,6 +189,24 @@ function App() {
             return () => clearInterval(tick);
         }
         setSendTimer(0);
+    }, [isSending]);
+
+    // Animation cycle qua các bước phân tích
+    useEffect(() => {
+        if (isSending) {
+            setAnalysisStep(0);
+            const stepInterval = setInterval(() => {
+                setAnalysisStep((prev) => {
+                    // Cycle qua các bước, dừng ở bước cuối
+                    if (prev < analysisSteps.length - 1) {
+                        return prev + 1;
+                    }
+                    return prev;
+                });
+            }, 1800); // Chuyển bước mỗi 1.8 giây
+            return () => clearInterval(stepInterval);
+        }
+        setAnalysisStep(0);
     }, [isSending]);
 
     const renderMarkdown = (text) => {
@@ -754,14 +782,33 @@ function App() {
                                 );
                             })}
                             {isSending && (
-                                <div className="chat-row chat-row--bot thinking-inline">
-                                    <div className="ai-thinking ai-thinking--flash">
-                                        <span className="spark" />
-                                        <span className="spark" />
-                                        <span className="spark" />
-                                        <span className="bulb" aria-hidden="true">🧠</span>
-                                        <span>BeeBox đang suy luận...</span>
-                                        <span className="ai-thinking__timer">{sendTimer}s</span>
+                                <div className="chat-row chat-row--bot">
+                                    <div className="analysis-pipeline">
+                                        <div className="analysis-header">
+                                            <span className="analysis-brain">🧠</span>
+                                            <span className="analysis-title">BeeBox đang xử lý...</span>
+                                            <span className="analysis-timer">{sendTimer}s</span>
+                                        </div>
+                                        <div className="analysis-steps">
+                                            {analysisSteps.map((step, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className={`analysis-step ${idx < analysisStep ? 'analysis-step--done' : ''} ${idx === analysisStep ? 'analysis-step--active' : ''} ${idx > analysisStep ? 'analysis-step--pending' : ''}`}
+                                                    style={{ '--step-color': step.color }}
+                                                >
+                                                    <span className="step-icon">{step.icon}</span>
+                                                    <span className="step-label">{step.label}</span>
+                                                    {idx === analysisStep && <span className="step-loader" />}
+                                                    {idx < analysisStep && <span className="step-check">✓</span>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="analysis-progress">
+                                            <div
+                                                className="analysis-progress__bar"
+                                                style={{ width: `${((analysisStep + 1) / analysisSteps.length) * 100}%` }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}
