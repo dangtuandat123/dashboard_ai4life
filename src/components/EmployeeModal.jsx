@@ -365,7 +365,7 @@ Hãy trình bày báo cáo dạng bảng markdown chuyên nghiệp, có biểu �
 
         window.addEventListener('bb-report-response', handleResponse);
 
-        // Timeout after 60 seconds
+        // Timeout after 120 seconds (2 minutes)
         setTimeout(() => {
             clearInterval(timeInterval);
             stepTimeouts.forEach(t => clearTimeout(t));
@@ -374,7 +374,7 @@ Hãy trình bày báo cáo dạng bảng markdown chuyên nghiệp, có biểu �
                 setReportLoading(false);
                 setReportError('Timeout - Vui lòng thử lại sau.');
             }
-        }, 60000);
+        }, 120000);
 
         // Dispatch request to App.jsx
         window.dispatchEvent(new CustomEvent('bb-report-request', {
@@ -680,19 +680,19 @@ Hãy trình bày báo cáo dạng bảng markdown chuyên nghiệp, có biểu �
                         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
                         onClick={!reportLoading ? closeReportResult : undefined}
                     />
-                    <div className="relative w-full max-w-2xl max-h-[85vh] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+                    <div className="relative w-full max-w-2xl max-h-[85vh] bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
                         {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 to-blue-500/10">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-gradient-to-r from-cyan-50 to-blue-50">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 flex items-center justify-center border border-amber-500/30">
                                     <span className="text-xl">🐝</span>
                                 </div>
                                 <div>
-                                    <h3 className="text-base font-bold text-white">
+                                    <h3 className="text-base font-bold text-slate-800">
                                         {reportLoading ? 'BeeBox đang phân tích...' : 'Báo cáo hoạt động'}
                                     </h3>
                                     {selectedEmployee && (
-                                        <p className="text-xs text-slate-400">
+                                        <p className="text-xs text-slate-600">
                                             Nhân viên: <span className="text-cyan-400">{selectedEmployee.full_name}</span>
                                             <span className="mx-2">•</span>
                                             <span className="text-amber-400">Tháng {currentMonth}/{currentYear}</span>
@@ -703,9 +703,9 @@ Hãy trình bày báo cáo dạng bảng markdown chuyên nghiệp, có biểu �
                             {!reportLoading && (
                                 <button
                                     onClick={closeReportResult}
-                                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                                    className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
                                 >
-                                    <X className="w-5 h-5 text-slate-400" />
+                                    <X className="w-5 h-5 text-slate-600" />
                                 </button>
                             )}
                         </div>
@@ -817,16 +817,16 @@ Hãy trình bày báo cáo dạng bảng markdown chuyên nghiệp, có biểu �
                                                 return (
                                                     <div
                                                         key={idx}
-                                                        className="prose prose-invert max-w-none text-slate-300"
+                                                        className="prose max-w-none text-slate-700"
                                                         dangerouslySetInnerHTML={{ __html: renderMarkdown(item.text) }}
                                                     />
                                                 );
                                             }
                                             if (item.type === 'chart') {
                                                 return (
-                                                    <div key={idx} className="relative rounded-xl overflow-hidden border border-white/10 bg-slate-800/50">
-                                                        <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 bg-slate-900/50">
-                                                            <span className="text-xs text-slate-400">📊 Biểu đồ phân tích</span>
+                                                    <div key={idx} className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+                                                        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 bg-white">
+                                                            <span className="text-xs text-slate-600">📊 Biểu đồ phân tích</span>
                                                         </div>
                                                         <iframe
                                                             srcDoc={item.html}
@@ -840,16 +840,16 @@ Hãy trình bày báo cáo dạng bảng markdown chuyên nghiệp, có biểu �
                                             }
                                             if (item.type === 'table') {
                                                 return (
-                                                    <div key={idx} className="rounded-xl overflow-hidden border border-white/10">
-                                                        <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 bg-slate-900/50">
-                                                            <span className="text-xs text-slate-400">📋 Bảng dữ liệu</span>
+                                                    <div key={idx} className="rounded-xl overflow-hidden border border-slate-200">
+                                                        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 bg-white">
+                                                            <span className="text-xs text-slate-600">📋 Bảng dữ liệu</span>
                                                         </div>
                                                         <div className="overflow-x-auto">
                                                             <table className="w-full text-sm">
                                                                 <thead>
-                                                                    <tr className="bg-slate-800/50">
+                                                                    <tr className="bg-slate-100">
                                                                         {(item.columns || []).map((col, colIdx) => (
-                                                                            <th key={colIdx} className="px-4 py-3 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider border-b border-white/5">
+                                                                            <th key={colIdx} className="px-4 py-3 text-left text-xs font-semibold text-cyan-600 uppercase tracking-wider border-b border-slate-200">
                                                                                 {col}
                                                                             </th>
                                                                         ))}
@@ -857,9 +857,9 @@ Hãy trình bày báo cáo dạng bảng markdown chuyên nghiệp, có biểu �
                                                                 </thead>
                                                                 <tbody>
                                                                     {(item.rows || []).map((row, rowIdx) => (
-                                                                        <tr key={rowIdx} className="hover:bg-white/5 transition-colors">
+                                                                        <tr key={rowIdx} className="hover:bg-slate-50 transition-colors">
                                                                             {row.map((cell, cellIdx) => (
-                                                                                <td key={cellIdx} className="px-4 py-3 text-slate-300 border-b border-white/5">
+                                                                                <td key={cellIdx} className="px-4 py-3 text-slate-700 border-b border-slate-100">
                                                                                     {cell}
                                                                                 </td>
                                                                             ))}
@@ -885,7 +885,7 @@ Hãy trình bày báo cáo dạng bảng markdown chuyên nghiệp, có biểu �
 
                         {/* Footer */}
                         {!reportLoading && !reportError && (
-                            <div className="flex items-center justify-between gap-3 p-4 border-t border-white/10 bg-slate-900/50">
+                            <div className="flex items-center justify-between gap-3 p-4 border-t border-slate-200 bg-slate-50">
                                 <div className="text-xs text-slate-500">
                                     Thời gian suy luận: {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}
                                 </div>
@@ -909,7 +909,7 @@ Hãy trình bày báo cáo dạng bảng markdown chuyên nghiệp, có biểu �
                                     </button>
                                     <button
                                         onClick={closeReportResult}
-                                        className="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium text-slate-300 transition-all"
+                                        className="px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-sm font-medium text-slate-700 transition-all"
                                     >
                                         Đóng
                                     </button>
