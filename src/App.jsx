@@ -404,21 +404,21 @@ function App() {
 
                 const rawText = await response.text();
 
-                // Parse response - extract text content
-                let resultText = '';
+                // Parse response - extract all content types (text, chart, table)
+                let parsedData = [];
                 try {
-                    const parsed = parseWebhookPayload(rawText);
-                    resultText = parsed
-                        .filter(m => m.type === 'text')
-                        .map(m => m.text)
-                        .join('\n\n');
+                    parsedData = parseWebhookPayload(rawText);
                 } catch {
-                    resultText = rawText;
+                    parsedData = [{ type: 'text', text: rawText }];
                 }
 
-                // Dispatch response back to EmployeeModal
+                // Dispatch response back to EmployeeModal with full data
                 window.dispatchEvent(new CustomEvent('bb-report-response', {
-                    detail: { requestId, result: resultText || 'Không có dữ liệu trả về.' }
+                    detail: {
+                        requestId,
+                        data: parsedData,
+                        result: parsedData.filter(m => m.type === 'text').map(m => m.text).join('\n\n') || 'Không có dữ liệu trả về.'
+                    }
                 }));
             } catch (err) {
                 console.error('Report webhook error:', err);

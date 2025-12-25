@@ -47,6 +47,7 @@ const EmployeeModal = ({ isOpen, onClose }) => {
     const [reportResultOpen, setReportResultOpen] = useState(false);
     const [reportLoading, setReportLoading] = useState(false);
     const [reportResult, setReportResult] = useState('');
+    const [reportData, setReportData] = useState([]); // Array of {type, text/html/columns/rows}
     const [reportError, setReportError] = useState(null);
     const [analysisStep, setAnalysisStep] = useState(0);
     const [elapsedTime, setElapsedTime] = useState(0);
@@ -240,6 +241,7 @@ const EmployeeModal = ({ isOpen, onClose }) => {
     const closeReportResult = () => {
         setReportResultOpen(false);
         setReportResult('');
+        setReportData([]);
         setReportError(null);
     };
 
@@ -290,6 +292,7 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                     setReportError(event.detail.error);
                 } else {
                     setReportResult(event.detail.result || 'Không có dữ liệu trả về.');
+                    setReportData(event.detail.data || []);
                 }
 
                 window.removeEventListener('bb-report-response', handleResponse);
@@ -743,10 +746,76 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                                     </button>
                                 </div>
                             ) : (
-                                <div
-                                    className="prose prose-invert max-w-none text-slate-300"
-                                    dangerouslySetInnerHTML={{ __html: renderMarkdown(reportResult) }}
-                                />
+                                <div className="space-y-4">
+                                    {reportData.length > 0 ? (
+                                        reportData.map((item, idx) => {
+                                            if (item.type === 'text') {
+                                                return (
+                                                    <div
+                                                        key={idx}
+                                                        className="prose prose-invert max-w-none text-slate-300"
+                                                        dangerouslySetInnerHTML={{ __html: renderMarkdown(item.text) }}
+                                                    />
+                                                );
+                                            }
+                                            if (item.type === 'chart') {
+                                                return (
+                                                    <div key={idx} className="relative rounded-xl overflow-hidden border border-white/10 bg-slate-800/50">
+                                                        <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 bg-slate-900/50">
+                                                            <span className="text-xs text-slate-400">📊 Biểu đồ phân tích</span>
+                                                        </div>
+                                                        <iframe
+                                                            srcDoc={item.html}
+                                                            className="w-full border-0"
+                                                            style={{ height: '400px', background: '#1e293b' }}
+                                                            sandbox="allow-scripts allow-same-origin"
+                                                            title={`Chart ${idx}`}
+                                                        />
+                                                    </div>
+                                                );
+                                            }
+                                            if (item.type === 'table') {
+                                                return (
+                                                    <div key={idx} className="rounded-xl overflow-hidden border border-white/10">
+                                                        <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 bg-slate-900/50">
+                                                            <span className="text-xs text-slate-400">📋 Bảng dữ liệu</span>
+                                                        </div>
+                                                        <div className="overflow-x-auto">
+                                                            <table className="w-full text-sm">
+                                                                <thead>
+                                                                    <tr className="bg-slate-800/50">
+                                                                        {(item.columns || []).map((col, colIdx) => (
+                                                                            <th key={colIdx} className="px-4 py-3 text-left text-xs font-semibold text-cyan-400 uppercase tracking-wider border-b border-white/5">
+                                                                                {col}
+                                                                            </th>
+                                                                        ))}
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {(item.rows || []).map((row, rowIdx) => (
+                                                                        <tr key={rowIdx} className="hover:bg-white/5 transition-colors">
+                                                                            {row.map((cell, cellIdx) => (
+                                                                                <td key={cellIdx} className="px-4 py-3 text-slate-300 border-b border-white/5">
+                                                                                    {cell}
+                                                                                </td>
+                                                                            ))}
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })
+                                    ) : (
+                                        <div
+                                            className="prose prose-invert max-w-none text-slate-300"
+                                            dangerouslySetInnerHTML={{ __html: renderMarkdown(reportResult) }}
+                                        />
+                                    )}
+                                </div>
                             )}
                         </div>
 
