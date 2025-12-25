@@ -49,6 +49,7 @@ const EmployeeModal = ({ isOpen, onClose }) => {
     const [reportResult, setReportResult] = useState('');
     const [reportError, setReportError] = useState(null);
     const [analysisStep, setAnalysisStep] = useState(0);
+    const [elapsedTime, setElapsedTime] = useState(0);
 
     // Get current month filter - use dashboard filter or current month
     const currentYear = filters.year;
@@ -260,14 +261,19 @@ const EmployeeModal = ({ isOpen, onClose }) => {
         setReportError(null);
         setReportResult('');
         setAnalysisStep(0);
+        setElapsedTime(0);
 
-        // Animate through analysis steps
-        const stepInterval = setInterval(() => {
-            setAnalysisStep(prev => {
-                if (prev < ANALYSIS_STEPS.length - 1) return prev + 1;
-                return prev;
-            });
-        }, 800);
+        // Timer for elapsed time (every 1 second)
+        const timeInterval = setInterval(() => {
+            setElapsedTime(prev => prev + 1);
+        }, 1000);
+
+        // Animate through analysis steps (6 seconds each for ~30s total)
+        // Step timing: 0s->Step1, 6s->Step2, 12s->Step3, 18s->Step4
+        const stepTimings = [0, 6000, 12000, 18000];
+        const stepTimeouts = stepTimings.map((delay, index) =>
+            setTimeout(() => setAnalysisStep(index), delay)
+        );
 
         // Create unique request ID
         const requestId = `report-${selectedEmployee.employee_id}-${Date.now()}`;
@@ -275,7 +281,9 @@ const EmployeeModal = ({ isOpen, onClose }) => {
         // Listen for response from App.jsx
         const handleResponse = (event) => {
             if (event.detail?.requestId === requestId) {
-                clearInterval(stepInterval);
+                // Clear all timers
+                clearInterval(timeInterval);
+                stepTimeouts.forEach(t => clearTimeout(t));
                 setReportLoading(false);
 
                 if (event.detail.error) {
@@ -292,7 +300,8 @@ const EmployeeModal = ({ isOpen, onClose }) => {
 
         // Timeout after 60 seconds
         setTimeout(() => {
-            clearInterval(stepInterval);
+            clearInterval(timeInterval);
+            stepTimeouts.forEach(t => clearTimeout(t));
             window.removeEventListener('bb-report-response', handleResponse);
             if (reportLoading) {
                 setReportLoading(false);
@@ -661,10 +670,20 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                                     </div>
 
                                     {/* Title with typing effect */}
-                                    <h4 className="text-lg font-bold text-white mb-2 bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                                    <h4 className="text-lg font-bold text-white mb-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 bg-clip-text text-transparent">
                                         BeeBox đang phân tích
                                     </h4>
-                                    <p className="text-sm text-slate-400 mb-8">Vui lòng chờ trong giây lát...</p>
+
+                                    {/* Elapsed time counter */}
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <div className="px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700/50 flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+                                            <span className="text-sm font-mono text-cyan-400">
+                                                {Math.floor(elapsedTime / 60).toString().padStart(2, '0')}:{(elapsedTime % 60).toString().padStart(2, '0')}
+                                            </span>
+                                            <span className="text-xs text-slate-500">thời gian suy luận</span>
+                                        </div>
+                                    </div>
 
                                     {/* Analysis Steps with enhanced styling */}
                                     <div className="space-y-3 w-full max-w-md">
@@ -672,15 +691,15 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                                             <div
                                                 key={step.id}
                                                 className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-700 transform ${index <= analysisStep
-                                                        ? 'bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-purple-500/10 border border-cyan-500/40 scale-100 opacity-100'
-                                                        : 'bg-slate-800/50 border border-slate-700/50 scale-95 opacity-50'
+                                                    ? 'bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-purple-500/10 border border-cyan-500/40 scale-100 opacity-100'
+                                                    : 'bg-slate-800/50 border border-slate-700/50 scale-95 opacity-50'
                                                     }`}
                                             >
                                                 <div className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${index < analysisStep
-                                                        ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30'
-                                                        : index === analysisStep
-                                                            ? 'bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30'
-                                                            : 'bg-slate-700'
+                                                    ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30'
+                                                    : index === analysisStep
+                                                        ? 'bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30'
+                                                        : 'bg-slate-700'
                                                     }`}>
                                                     {index < analysisStep ? (
                                                         <Check className="w-5 h-5 text-white" />
