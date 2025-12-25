@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { X, Users, ChevronLeft, ChevronRight, Mail, Building2, Search, Activity, UserCheck, DollarSign, FileText, Check, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { X, Users, ChevronLeft, ChevronRight, Mail, Building2, Search, Activity, UserCheck, DollarSign, FileText, Check, Loader2, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatVietnameseNumber } from '../utils/formatters';
 import { useFilter } from '../contexts/FilterContext';
+import html2pdf from 'html2pdf.js';
 
 const ITEMS_PER_PAGE = 6;
 
@@ -51,6 +52,8 @@ const EmployeeModal = ({ isOpen, onClose }) => {
     const [reportError, setReportError] = useState(null);
     const [analysisStep, setAnalysisStep] = useState(0);
     const [elapsedTime, setElapsedTime] = useState(0);
+    const [isDownloading, setIsDownloading] = useState(false);
+    const reportContentRef = useRef(null);
 
     // Get current month filter - use dashboard filter or current month
     const currentYear = filters.year;
@@ -245,6 +248,53 @@ const EmployeeModal = ({ isOpen, onClose }) => {
         setReportError(null);
     };
 
+    // Download report as PDF
+    const downloadPdf = async () => {
+        if (!reportContentRef.current || !selectedEmployee) return;
+
+        setIsDownloading(true);
+
+        try {
+            // Create a styled wrapper for PDF
+            const pdfContent = document.createElement('div');
+            pdfContent.innerHTML = `
+                <div style="font-family: 'Segoe UI', Tahoma, sans-serif; padding: 40px; background: white; color: #1e293b;">
+                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #0891b2; padding-bottom: 20px;">
+                        <h1 style="color: #0891b2; margin: 0; font-size: 28px;">🐝 BeeBox Dashboard</h1>
+                        <p style="color: #64748b; margin: 10px 0 0 0; font-size: 14px;">Báo cáo hoạt động nhân viên</p>
+                    </div>
+                    <div style="background: #f1f5f9; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                        <h2 style="margin: 0 0 10px 0; color: #0f172a; font-size: 20px;">Nhân viên: ${selectedEmployee.full_name}</h2>
+                        <p style="margin: 0; color: #64748b; font-size: 14px;">
+                            Kỳ báo cáo: Tháng ${currentMonth}/${currentYear} • 
+                            Xuất ngày: ${new Date().toLocaleDateString('vi-VN')}
+                        </p>
+                    </div>
+                    <div style="line-height: 1.8; font-size: 14px;">
+                        ${reportContentRef.current.innerHTML}
+                    </div>
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 12px;">
+                        <p>Báo cáo được tạo tự động bởi BeeBox AI Dashboard</p>
+                    </div>
+                </div>
+            `;
+
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: `BeeBox_BaoCao_${selectedEmployee.full_name.replace(/\s+/g, '_')}_T${currentMonth}_${currentYear}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            await html2pdf().set(opt).from(pdfContent).save();
+        } catch (err) {
+            console.error('PDF download error:', err);
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
     // Generate and export report - dispatch event for App.jsx to handle
     const handleExportReport = () => {
         if (!selectedEmployee || selectedMetrics.length === 0) return;
@@ -254,7 +304,21 @@ const EmployeeModal = ({ isOpen, onClose }) => {
             .filter(Boolean)
             .join(', ');
 
-        const prompt = `Xuất báo cáo hoạt động chi tiết cho nhân viên ${selectedEmployee.full_name} trong tháng ${currentMonth}/${currentYear}. Các chỉ số cần phân tích: ${metricsLabels}. Hãy trình bày báo cáo dạng bảng markdown và đưa ra nhận xét, đánh giá chi tiết.`;
+        const prompt = `Phân tích chuyên sâu hiệu suất nhân viên:
+- ID nhân viên: ${selectedEmployee.employee_id}
+- Tên nhân viên: ${selectedEmployee.full_name}
+- Kỳ phân tích: Tháng ${currentMonth}/${currentYear}
+- Các chỉ số cần phân tích: ${metricsLabels}
+
+Yêu cầu phân tích chi tiết:
+1. Tổng quan hiệu suất làm việc trong tháng
+2. Phân tích từng chỉ số được chọn với số liệu cụ thể
+3. So sánh với KPI/mục tiêu đề ra
+4. Điểm mạnh và điểm cần cải thiện
+5. Đề xuất hành động cụ thể để nâng cao hiệu suất
+6. Dự báo xu hướng tháng tiếp theo
+
+Hãy trình bày báo cáo dạng bảng markdown chuyên nghiệp, có biểu đồ nếu cần, và đưa ra nhận xét, đánh giá chi tiết dựa trên dữ liệu thực tế.`;
 
         // Close metrics modal and open result modal
         setReportModalOpen(false);
@@ -746,7 +810,7 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                                     </button>
                                 </div>
                             ) : (
-                                <div className="space-y-4">
+                                <div ref={reportContentRef} className="space-y-4">
                                     {reportData.length > 0 ? (
                                         reportData.map((item, idx) => {
                                             if (item.type === 'text') {
@@ -821,13 +885,35 @@ const EmployeeModal = ({ isOpen, onClose }) => {
 
                         {/* Footer */}
                         {!reportLoading && !reportError && (
-                            <div className="flex items-center justify-end gap-3 p-4 border-t border-white/10 bg-slate-900/50">
-                                <button
-                                    onClick={closeReportResult}
-                                    className="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium text-slate-300 transition-all"
-                                >
-                                    Đóng
-                                </button>
+                            <div className="flex items-center justify-between gap-3 p-4 border-t border-white/10 bg-slate-900/50">
+                                <div className="text-xs text-slate-500">
+                                    Thời gian suy luận: {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={downloadPdf}
+                                        disabled={isDownloading}
+                                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-sm font-medium text-white transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isDownloading ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                Đang tải...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Download className="w-4 h-4" />
+                                                Tải PDF
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={closeReportResult}
+                                        className="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium text-slate-300 transition-all"
+                                    >
+                                        Đóng
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
