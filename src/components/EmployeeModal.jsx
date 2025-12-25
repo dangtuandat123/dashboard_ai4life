@@ -254,7 +254,19 @@ const EmployeeModal = ({ isOpen, onClose }) => {
 
         setIsDownloading(true);
 
+        // Delay to allow UI update
+        await new Promise(resolve => setTimeout(resolve, 50));
+
         try {
+            // Clone content and remove iframes (they cause lag)
+            const clonedContent = reportContentRef.current.cloneNode(true);
+            const iframes = clonedContent.querySelectorAll('iframe');
+            iframes.forEach(iframe => {
+                const placeholder = document.createElement('div');
+                placeholder.style.cssText = 'text-align:center;padding:15px;background:#f1f5f9;border-radius:8px;color:#64748b;font-size:12px;';
+                placeholder.textContent = '[Biểu đồ - Xem trên dashboard]';
+                iframe.parentNode.replaceChild(placeholder, iframe);
+            });
             // Create a styled wrapper for PDF
             const pdfContent = document.createElement('div');
             pdfContent.innerHTML = `
@@ -270,8 +282,8 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                             Xuất ngày: ${new Date().toLocaleDateString('vi-VN')}
                         </p>
                     </div>
-                    <div style="line-height: 1.8; font-size: 14px;">
-                        ${reportContentRef.current.innerHTML}
+                    <div style="line-height: 1.6; font-size: 13px;">
+                        ${clonedContent.innerHTML}
                     </div>
                     <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 12px;">
                         <p>Báo cáo được tạo tự động bởi BeeBox AI Dashboard</p>
@@ -282,8 +294,8 @@ const EmployeeModal = ({ isOpen, onClose }) => {
             const opt = {
                 margin: [10, 10, 10, 10],
                 filename: `BeeBox_BaoCao_${selectedEmployee.full_name.replace(/\s+/g, '_')}_T${currentMonth}_${currentYear}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false },
+                image: { type: 'jpeg', quality: 0.85 },
+                html2canvas: { scale: 1.2, useCORS: true, logging: false, removeContainer: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
