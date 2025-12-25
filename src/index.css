@@ -7,33 +7,37 @@
 :root {
   color-scheme: dark;
   --assistant-width: clamp(320px, 40vw, 520px);
-  --bg: #05060d;
-  --bg-accent: radial-gradient(circle at 15% 20%, rgba(34, 211, 238, 0.08), transparent 30%),
-    radial-gradient(circle at 80% 15%, rgba(168, 85, 247, 0.08), transparent 28%),
-    radial-gradient(circle at 60% 80%, rgba(59, 130, 246, 0.08), transparent 28%),
-    #05060d;
-  --surface: linear-gradient(135deg, rgba(7, 11, 23, 0.95), rgba(7, 12, 25, 0.92));
-  --panel: rgba(11, 17, 32, 0.82);
-  --panel-soft: rgba(255, 255, 255, 0.04);
-  --panel-strong: rgba(255, 255, 255, 0.08);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --text-strong: #e2e8f0;
-  --text-muted: #94a3b8;
-  --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.35);
-  --glow-1: #22d3ee;
-  --glow-2: #a855f7;
-  --glow-1-soft: rgba(34, 211, 238, 0.35);
-  --glow-2-soft: rgba(168, 85, 247, 0.3);
-  --card-highlight: rgba(34, 211, 238, 0.08);
-  --grid-color: rgba(255, 255, 255, 0.05);
+  --bg: #0a0e1a;
+  --bg-accent: radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.1), transparent 35%),
+    radial-gradient(circle at 80% 15%, rgba(139, 92, 246, 0.08), transparent 30%),
+    radial-gradient(circle at 60% 80%, rgba(34, 211, 238, 0.06), transparent 30%),
+    #0a0e1a;
+  --surface: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(17, 24, 39, 0.92));
+  --panel: rgba(17, 24, 39, 0.9);
+  --panel-soft: rgba(255, 255, 255, 0.05);
+  --panel-strong: rgba(255, 255, 255, 0.1);
+  --border: rgba(148, 163, 184, 0.12);
+  --border-strong: rgba(148, 163, 184, 0.2);
+  --text-strong: #f8fafc;
+  --text-muted: #cbd5e1;
+  --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.4);
+  --glow-1: #6366f1;
+  --glow-2: #8b5cf6;
+  --glow-1-soft: rgba(99, 102, 241, 0.3);
+  --glow-2-soft: rgba(139, 92, 246, 0.25);
+  --card-highlight: rgba(99, 102, 241, 0.1);
+  --grid-color: rgba(148, 163, 184, 0.06);
   --tint-5: rgba(255, 255, 255, 0.06);
   --tint-10: rgba(255, 255, 255, 0.1);
   --tint-15: rgba(255, 255, 255, 0.14);
-  --layer-1: #0f172a;
-  --layer-2: #0b1224;
-  --tooltip-bg: rgba(15, 23, 42, 0.95);
-  --tooltip-border: rgba(255, 255, 255, 0.18);
+  --layer-1: #1e293b;
+  --layer-2: #0f172a;
+  --tooltip-bg: rgba(30, 41, 59, 0.98);
+  --tooltip-border: rgba(148, 163, 184, 0.2);
+  --accent-primary: #818cf8;
+  --accent-secondary: #a78bfa;
+  --accent-success: #34d399;
+  --accent-warning: #fbbf24;
 }
 
 :root[data-theme='light'] {
@@ -82,6 +86,10 @@ body {
   overflow-y: auto;
   min-height: 100vh;
   transition: background 0.5s ease, color 0.3s ease;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .dashboard-container {
@@ -92,6 +100,8 @@ body {
   overflow: auto;
   color: var(--text-strong);
   animation: fadeIn 0.6s ease;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .dashboard-container::before {
@@ -347,9 +357,9 @@ body {
   padding: 0.7rem 1.2rem;
   border-radius: 14px;
   border: none;
-  background: linear-gradient(135deg, #22d3ee, #22c55e, #10b981);
+  background: linear-gradient(135deg, #818cf8, #6366f1, #4f46e5);
   background-size: 200% 200%;
-  color: #041019;
+  color: #ffffff;
   font-weight: 800;
   font-size: 0.85rem;
   box-shadow: 
@@ -570,8 +580,8 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #22d3ee, #a855f7);
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+  background: linear-gradient(135deg, #818cf8, #a78bfa);
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.6);
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -589,7 +599,7 @@ body {
   height: 4px;
   width: 50px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #22d3ee, #a855f7, #ec4899);
+  background: linear-gradient(90deg, #818cf8, #a78bfa, #c084fc);
   background-size: 200% 100%;
   box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
   animation: underlineShimmer 3s ease infinite;
@@ -796,14 +806,14 @@ body {
 .assistant-kicker::before {
   content: '●';
   font-size: 8px;
-  color: #22d3ee;
+  color: #818cf8;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 .assistant-title {
   font-size: 1.1rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #f1f5f9, #e2e8f0, #22d3ee);
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0, #a78bfa);
   background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
