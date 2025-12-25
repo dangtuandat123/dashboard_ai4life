@@ -395,7 +395,7 @@ function App() {
             if (!requestId || !prompt) return;
 
             try {
-                const endpoint = 'https://chatgpt.id.vn/webhook/bb17371c-6a34-421e-b659-75aa42041122';
+                const endpoint = 'https://chatgpt.id.vn/webhook/b680f3cc-502f-4a62-a7ed-461352382e8d';
                 const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
