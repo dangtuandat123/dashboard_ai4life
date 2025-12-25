@@ -388,6 +388,50 @@ function App() {
         document.body.style.overflow = '';
     };
 
+    // Handle report request from EmployeeModal
+    useEffect(() => {
+        const handleReportRequest = async (event) => {
+            const { requestId, prompt, employeeName } = event.detail || {};
+            if (!requestId || !prompt) return;
+
+            try {
+                const endpoint = 'https://chatgpt.id.vn/webhook/bb17371c-6a34-421e-b659-75aa42041122';
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: prompt })
+                });
+
+                const rawText = await response.text();
+
+                // Parse response - extract text content
+                let resultText = '';
+                try {
+                    const parsed = parseWebhookPayload(rawText);
+                    resultText = parsed
+                        .filter(m => m.type === 'text')
+                        .map(m => m.text)
+                        .join('\n\n');
+                } catch {
+                    resultText = rawText;
+                }
+
+                // Dispatch response back to EmployeeModal
+                window.dispatchEvent(new CustomEvent('bb-report-response', {
+                    detail: { requestId, result: resultText || 'Không có dữ liệu trả về.' }
+                }));
+            } catch (err) {
+                console.error('Report webhook error:', err);
+                window.dispatchEvent(new CustomEvent('bb-report-response', {
+                    detail: { requestId, error: err.message || 'Có lỗi xảy ra khi tạo báo cáo' }
+                }));
+            }
+        };
+
+        window.addEventListener('bb-report-request', handleReportRequest);
+        return () => window.removeEventListener('bb-report-request', handleReportRequest);
+    }, []);
+
     const downloadTableCsv = (columns = [], rows = []) => {
         const header = columns.join(',');
         const body = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');

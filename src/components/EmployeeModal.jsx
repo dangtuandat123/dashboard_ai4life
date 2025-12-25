@@ -1,10 +1,31 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Users, ChevronLeft, ChevronRight, Mail, Building2, Search, Activity, UserCheck, DollarSign, FileText } from 'lucide-react';
+import { X, Users, ChevronLeft, ChevronRight, Mail, Building2, Search, Activity, UserCheck, DollarSign, FileText, Check, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatVietnameseNumber } from '../utils/formatters';
 import { useFilter } from '../contexts/FilterContext';
 
 const ITEMS_PER_PAGE = 6;
+
+// Webhook URL for AI analysis
+const WEBHOOK_URL = 'https://chatgpt.id.vn/webhook/bb17371c-4e2f-4cdc-87f3-8f1ef8faece7';
+
+// Report metrics options
+const REPORT_METRICS = [
+    { id: 'revenue', label: 'Doanh thu', description: 'Tổng doanh thu đạt được trong kỳ' },
+    { id: 'activities', label: 'Hoạt động', description: 'Số cuộc gọi, email, cuộc hẹn' },
+    { id: 'leads', label: 'Leads', description: 'Số lượng khách hàng tiềm năng' },
+    { id: 'conversion', label: 'Tỷ lệ chuyển đổi', description: 'Tỷ lệ chốt deal thành công' },
+    { id: 'target', label: 'So sánh mục tiêu', description: 'So sánh với KPI đã giao' },
+    { id: 'trend', label: 'Xu hướng', description: 'Phân tích tăng/giảm so với kỳ trước' },
+];
+
+// Analysis steps for loading animation
+const ANALYSIS_STEPS = [
+    { id: 1, text: 'Đang thu thập dữ liệu nhân viên...' },
+    { id: 2, text: 'Phân tích chỉ số hiệu suất...' },
+    { id: 3, text: 'So sánh với mục tiêu KPI...' },
+    { id: 4, text: 'Tạo báo cáo chi tiết...' },
+];
 
 const EmployeeModal = ({ isOpen, onClose }) => {
     const { filters } = useFilter();
@@ -17,11 +38,25 @@ const EmployeeModal = ({ isOpen, onClose }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
 
+    // Report modal state
+    const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const [selectedMetrics, setSelectedMetrics] = useState(['revenue', 'activities', 'leads']);
+
+    // Report result state
+    const [reportResultOpen, setReportResultOpen] = useState(false);
+    const [reportLoading, setReportLoading] = useState(false);
+    const [reportResult, setReportResult] = useState('');
+    const [reportError, setReportError] = useState(null);
+    const [analysisStep, setAnalysisStep] = useState(0);
+
     // Get current month filter - use dashboard filter or current month
     const currentYear = filters.year;
     const currentMonth = filters.month === 'all' ? new Date().getMonth() + 1 : Number(filters.month);
 
     const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+
 
     // Debounce search
     useEffect(() => {
@@ -184,6 +219,117 @@ const EmployeeModal = ({ isOpen, onClose }) => {
         return colors[Math.abs(hash) % colors.length];
     };
 
+    // Toggle metric selection
+    const toggleMetric = (metricId) => {
+        setSelectedMetrics(prev =>
+            prev.includes(metricId)
+                ? prev.filter(id => id !== metricId)
+                : [...prev, metricId]
+        );
+    };
+
+    // Open report modal for employee
+    const openReportModal = (emp) => {
+        setSelectedEmployee(emp);
+        setSelectedMetrics(['revenue', 'activities', 'leads']); // Reset to defaults
+        setReportModalOpen(true);
+    };
+
+    // Close report result modal
+    const closeReportResult = () => {
+        setReportResultOpen(false);
+        setReportResult('');
+        setReportError(null);
+    };
+
+    // Generate and export report - dispatch event for App.jsx to handle
+    const handleExportReport = () => {
+        if (!selectedEmployee || selectedMetrics.length === 0) return;
+
+        const metricsLabels = selectedMetrics
+            .map(id => REPORT_METRICS.find(m => m.id === id)?.label)
+            .filter(Boolean)
+            .join(', ');
+
+        const prompt = `Xuất báo cáo hoạt động chi tiết cho nhân viên ${selectedEmployee.full_name} trong tháng ${currentMonth}/${currentYear}. Các chỉ số cần phân tích: ${metricsLabels}. Hãy trình bày báo cáo dạng bảng markdown và đưa ra nhận xét, đánh giá chi tiết.`;
+
+        // Close metrics modal and open result modal
+        setReportModalOpen(false);
+        setReportResultOpen(true);
+        setReportLoading(true);
+        setReportError(null);
+        setReportResult('');
+        setAnalysisStep(0);
+
+        // Animate through analysis steps
+        const stepInterval = setInterval(() => {
+            setAnalysisStep(prev => {
+                if (prev < ANALYSIS_STEPS.length - 1) return prev + 1;
+                return prev;
+            });
+        }, 800);
+
+        // Create unique request ID
+        const requestId = `report-${selectedEmployee.employee_id}-${Date.now()}`;
+
+        // Listen for response from App.jsx
+        const handleResponse = (event) => {
+            if (event.detail?.requestId === requestId) {
+                clearInterval(stepInterval);
+                setReportLoading(false);
+
+                if (event.detail.error) {
+                    setReportError(event.detail.error);
+                } else {
+                    setReportResult(event.detail.result || 'Không có dữ liệu trả về.');
+                }
+
+                window.removeEventListener('bb-report-response', handleResponse);
+            }
+        };
+
+        window.addEventListener('bb-report-response', handleResponse);
+
+        // Timeout after 60 seconds
+        setTimeout(() => {
+            clearInterval(stepInterval);
+            window.removeEventListener('bb-report-response', handleResponse);
+            if (reportLoading) {
+                setReportLoading(false);
+                setReportError('Timeout - Vui lòng thử lại sau.');
+            }
+        }, 60000);
+
+        // Dispatch request to App.jsx
+        window.dispatchEvent(new CustomEvent('bb-report-request', {
+            detail: {
+                requestId,
+                prompt,
+                employeeName: selectedEmployee.full_name
+            }
+        }));
+    };
+
+    // Render markdown to HTML (basic)
+    const renderMarkdown = (text) => {
+        if (!text) return '';
+        return text
+            .replace(/```([\s\S]*?)```/g, '<pre class="bg-slate-800 p-3 rounded-lg overflow-x-auto text-sm my-2">$1</pre>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold text-white mt-4 mb-2">$1</h3>')
+            .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold text-white mt-4 mb-2">$1</h2>')
+            .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-white mt-4 mb-2">$1</h1>')
+            .replace(/^\- (.*$)/gim, '<li class="ml-4 text-slate-300">$1</li>')
+            .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 text-slate-300 list-decimal">$1</li>')
+            .replace(/\|(.*)\|/g, (match) => {
+                const cells = match.split('|').filter(c => c.trim());
+                return '<tr>' + cells.map(c => `<td class="border border-slate-600 px-3 py-2 text-sm">${c.trim()}</td>`).join('') + '</tr>';
+            })
+            .replace(/\n\n/g, '<br/><br/>')
+            .replace(/\n/g, '<br/>');
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -329,16 +475,7 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                                             {/* Export Button */}
                                             <div className="mt-3 pt-3 border-t border-white/5">
                                                 <button
-                                                    onClick={() => {
-                                                        // Trigger AI to generate activity report
-                                                        window.dispatchEvent(new CustomEvent('bb-insight', {
-                                                            detail: {
-                                                                title: 'Báo cáo hoạt động',
-                                                                text: `Xuất báo cáo hoạt động chi tiết cho nhân viên ${emp.full_name} trong tháng ${currentMonth}/${currentYear}. Bao gồm: số cuộc gọi, cuộc hẹn, email, doanh thu đạt được và đánh giá hiệu suất.`
-                                                            }
-                                                        }));
-                                                        onClose();
-                                                    }}
+                                                    onClick={() => openReportModal(emp)}
                                                     className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-medium transition-all hover:scale-[1.02]"
                                                 >
                                                     <FileText className="w-4 h-4" />
@@ -381,6 +518,202 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                     </div>
                 )}
             </div>
+
+            {/* Report Metrics Selection Modal */}
+            {reportModalOpen && selectedEmployee && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/40"
+                        onClick={() => setReportModalOpen(false)}
+                    />
+                    <div className="relative w-full max-w-md bg-slate-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-4 border-b border-white/10">
+                            <div>
+                                <h3 className="text-base font-bold text-white">Xuất báo cáo</h3>
+                                <p className="text-xs text-slate-400">
+                                    Nhân viên: <span className="text-cyan-400">{selectedEmployee.full_name}</span>
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setReportModalOpen(false)}
+                                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                            >
+                                <X className="w-4 h-4 text-slate-400" />
+                            </button>
+                        </div>
+
+                        {/* Metrics Selection */}
+                        <div className="p-4">
+                            <p className="text-xs text-slate-400 mb-3">Chọn các chỉ số cần báo cáo:</p>
+                            <div className="space-y-2">
+                                {REPORT_METRICS.map((metric) => {
+                                    const isSelected = selectedMetrics.includes(metric.id);
+                                    return (
+                                        <button
+                                            key={metric.id}
+                                            onClick={() => toggleMetric(metric.id)}
+                                            className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all ${isSelected
+                                                ? 'bg-cyan-500/20 border-cyan-500/50'
+                                                : 'bg-white/5 border-white/10 hover:bg-white/10'
+                                                }`}
+                                        >
+                                            <div className={`w-5 h-5 rounded-md flex items-center justify-center border-2 transition-all ${isSelected
+                                                ? 'bg-cyan-500 border-cyan-500'
+                                                : 'border-slate-500'
+                                                }`}>
+                                                {isSelected && <Check className="w-3 h-3 text-white" />}
+                                            </div>
+                                            <div className="flex-1 text-left">
+                                                <p className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                                                    {metric.label}
+                                                </p>
+                                                <p className="text-[10px] text-slate-500">{metric.description}</p>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex items-center gap-3 p-4 border-t border-white/10 bg-slate-900/50">
+                            <button
+                                onClick={() => setReportModalOpen(false)}
+                                className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium text-slate-300 transition-all"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleExportReport}
+                                disabled={selectedMetrics.length === 0}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium text-white transition-all"
+                            >
+                                <FileText className="w-4 h-4" />
+                                Xuất báo cáo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Report Result Modal */}
+            {reportResultOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                        onClick={!reportLoading ? closeReportResult : undefined}
+                    />
+                    <div className="relative w-full max-w-2xl max-h-[85vh] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 to-blue-500/10">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 flex items-center justify-center border border-amber-500/30">
+                                    <span className="text-xl">🐝</span>
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-white">
+                                        {reportLoading ? 'BeeBox đang phân tích...' : 'Báo cáo hoạt động'}
+                                    </h3>
+                                    {selectedEmployee && (
+                                        <p className="text-xs text-slate-400">
+                                            Nhân viên: <span className="text-cyan-400">{selectedEmployee.full_name}</span>
+                                            <span className="mx-2">•</span>
+                                            <span className="text-amber-400">Tháng {currentMonth}/{currentYear}</span>
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            {!reportLoading && (
+                                <button
+                                    onClick={closeReportResult}
+                                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-slate-400" />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {reportLoading ? (
+                                <div className="flex flex-col items-center justify-center py-12">
+                                    {/* BeeBox Animation */}
+                                    <div className="relative mb-8">
+                                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-500/30 to-yellow-500/30 flex items-center justify-center animate-pulse">
+                                            <span className="text-4xl animate-bounce">🐝</span>
+                                        </div>
+                                        <div className="absolute -inset-4 border-2 border-amber-500/20 rounded-full animate-ping" />
+                                    </div>
+
+                                    {/* Analysis Steps */}
+                                    <div className="space-y-3 w-full max-w-sm">
+                                        {ANALYSIS_STEPS.map((step, index) => (
+                                            <div
+                                                key={step.id}
+                                                className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-500 ${index <= analysisStep
+                                                    ? 'bg-cyan-500/20 border border-cyan-500/30'
+                                                    : 'bg-white/5 border border-white/5'
+                                                    }`}
+                                            >
+                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${index < analysisStep
+                                                    ? 'bg-green-500'
+                                                    : index === analysisStep
+                                                        ? 'bg-cyan-500 animate-pulse'
+                                                        : 'bg-slate-600'
+                                                    }`}>
+                                                    {index < analysisStep ? (
+                                                        <Check className="w-4 h-4 text-white" />
+                                                    ) : index === analysisStep ? (
+                                                        <Loader2 className="w-4 h-4 text-white animate-spin" />
+                                                    ) : (
+                                                        <span className="text-xs text-slate-400">{index + 1}</span>
+                                                    )}
+                                                </div>
+                                                <span className={`text-sm ${index <= analysisStep ? 'text-white' : 'text-slate-500'
+                                                    }`}>
+                                                    {step.text}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : reportError ? (
+                                <div className="text-center py-12">
+                                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
+                                        <X className="w-8 h-8 text-red-400" />
+                                    </div>
+                                    <h4 className="text-lg font-semibold text-white mb-2">Có lỗi xảy ra</h4>
+                                    <p className="text-sm text-slate-400">{reportError}</p>
+                                    <button
+                                        onClick={closeReportResult}
+                                        className="mt-6 px-6 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-medium text-white transition-all"
+                                    >
+                                        Đóng
+                                    </button>
+                                </div>
+                            ) : (
+                                <div
+                                    className="prose prose-invert max-w-none text-slate-300"
+                                    dangerouslySetInnerHTML={{ __html: renderMarkdown(reportResult) }}
+                                />
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        {!reportLoading && !reportError && (
+                            <div className="flex items-center justify-end gap-3 p-4 border-t border-white/10 bg-slate-900/50">
+                                <button
+                                    onClick={closeReportResult}
+                                    className="px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium text-slate-300 transition-all"
+                                >
+                                    Đóng
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
