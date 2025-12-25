@@ -637,43 +637,74 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                         {/* Content */}
                         <div className="flex-1 overflow-y-auto p-6">
                             {reportLoading ? (
-                                <div className="flex flex-col items-center justify-center py-12">
-                                    {/* BeeBox Animation */}
-                                    <div className="relative mb-8">
-                                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-500/30 to-yellow-500/30 flex items-center justify-center animate-pulse">
-                                            <span className="text-4xl animate-bounce">🐝</span>
+                                <div className="flex flex-col items-center justify-center py-8">
+                                    {/* Enhanced BeeBox Animation */}
+                                    <div className="relative mb-10">
+                                        {/* Outer glow rings */}
+                                        <div className="absolute -inset-8 rounded-full bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-orange-500/10 animate-pulse" />
+                                        <div className="absolute -inset-6 rounded-full border border-amber-500/20 animate-[spin_8s_linear_infinite]" />
+                                        <div className="absolute -inset-4 rounded-full border border-yellow-500/30 animate-[spin_6s_linear_infinite_reverse]" />
+
+                                        {/* Floating particles */}
+                                        <div className="absolute -inset-12">
+                                            <div className="absolute top-0 left-1/2 w-2 h-2 bg-amber-400/60 rounded-full animate-[bounce_2s_ease-in-out_infinite]" />
+                                            <div className="absolute bottom-0 right-1/4 w-1.5 h-1.5 bg-yellow-400/60 rounded-full animate-[bounce_2.5s_ease-in-out_infinite_0.5s]" />
+                                            <div className="absolute top-1/4 right-0 w-2 h-2 bg-orange-400/60 rounded-full animate-[bounce_3s_ease-in-out_infinite_1s]" />
+                                            <div className="absolute bottom-1/4 left-0 w-1.5 h-1.5 bg-amber-300/60 rounded-full animate-[bounce_2.2s_ease-in-out_infinite_0.3s]" />
                                         </div>
-                                        <div className="absolute -inset-4 border-2 border-amber-500/20 rounded-full animate-ping" />
+
+                                        {/* Main bee container */}
+                                        <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-amber-500/40 via-yellow-500/30 to-orange-500/40 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                                            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/10 to-transparent" />
+                                            <span className="text-5xl animate-bounce drop-shadow-lg" style={{ animationDuration: '1s' }}>🐝</span>
+                                        </div>
                                     </div>
 
-                                    {/* Analysis Steps */}
-                                    <div className="space-y-3 w-full max-w-sm">
+                                    {/* Title with typing effect */}
+                                    <h4 className="text-lg font-bold text-white mb-2 bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                                        BeeBox đang phân tích
+                                    </h4>
+                                    <p className="text-sm text-slate-400 mb-8">Vui lòng chờ trong giây lát...</p>
+
+                                    {/* Analysis Steps with enhanced styling */}
+                                    <div className="space-y-3 w-full max-w-md">
                                         {ANALYSIS_STEPS.map((step, index) => (
                                             <div
                                                 key={step.id}
-                                                className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-500 ${index <= analysisStep
-                                                    ? 'bg-cyan-500/20 border border-cyan-500/30'
-                                                    : 'bg-white/5 border border-white/5'
+                                                className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-700 transform ${index <= analysisStep
+                                                        ? 'bg-gradient-to-r from-cyan-500/20 via-blue-500/15 to-purple-500/10 border border-cyan-500/40 scale-100 opacity-100'
+                                                        : 'bg-slate-800/50 border border-slate-700/50 scale-95 opacity-50'
                                                     }`}
                                             >
-                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${index < analysisStep
-                                                    ? 'bg-green-500'
-                                                    : index === analysisStep
-                                                        ? 'bg-cyan-500 animate-pulse'
-                                                        : 'bg-slate-600'
+                                                <div className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${index < analysisStep
+                                                        ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30'
+                                                        : index === analysisStep
+                                                            ? 'bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30'
+                                                            : 'bg-slate-700'
                                                     }`}>
                                                     {index < analysisStep ? (
-                                                        <Check className="w-4 h-4 text-white" />
+                                                        <Check className="w-5 h-5 text-white" />
                                                     ) : index === analysisStep ? (
-                                                        <Loader2 className="w-4 h-4 text-white animate-spin" />
+                                                        <>
+                                                            <Loader2 className="w-5 h-5 text-white animate-spin" />
+                                                            <div className="absolute inset-0 rounded-xl animate-ping bg-cyan-500/30" />
+                                                        </>
                                                     ) : (
-                                                        <span className="text-xs text-slate-400">{index + 1}</span>
+                                                        <span className="text-sm font-bold text-slate-400">{index + 1}</span>
                                                     )}
                                                 </div>
-                                                <span className={`text-sm ${index <= analysisStep ? 'text-white' : 'text-slate-500'
-                                                    }`}>
-                                                    {step.text}
-                                                </span>
+                                                <div className="flex-1">
+                                                    <span className={`text-sm font-medium transition-colors duration-500 ${index <= analysisStep ? 'text-white' : 'text-slate-500'
+                                                        }`}>
+                                                        {step.text}
+                                                    </span>
+                                                    {index === analysisStep && (
+                                                        <div className="mt-2 h-1 bg-slate-700 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-full animate-[shimmer_1.5s_ease-in-out_infinite]"
+                                                                style={{ width: '60%', animationName: 'pulse' }} />
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
