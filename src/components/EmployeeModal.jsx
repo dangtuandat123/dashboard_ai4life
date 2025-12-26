@@ -248,91 +248,152 @@ const EmployeeModal = ({ isOpen, onClose }) => {
         setReportError(null);
     };
 
-    // Download report as PDF
-    const downloadPdf = async () => {
-        if (!reportContentRef.current || !selectedEmployee) return;
-
+    // Download report as PDF - put chart HTML directly in print
+    const downloadPdf = () => {
+        if (!selectedEmployee) return;
+        if (reportData.length === 0 && !reportResult) {
+            alert('Không có dữ liệu báo cáo để xuất');
+            return;
+        }
         setIsDownloading(true);
 
-        // Delay to allow UI update
-        await new Promise(resolve => setTimeout(resolve, 50));
-
         try {
-            // Clone content and remove iframes (they cause lag)
-            const clonedContent = reportContentRef.current.cloneNode(true);
-            const iframes = clonedContent.querySelectorAll('iframe');
-            iframes.forEach(iframe => {
-                const placeholder = document.createElement('div');
-                placeholder.style.cssText = 'text-align:center;padding:15px;background:#f1f5f9;border-radius:8px;color:#64748b;font-size:12px;';
-                placeholder.textContent = '[Biểu đồ - Xem trên dashboard]';
-                iframe.parentNode.replaceChild(placeholder, iframe);
-            });
-            // Create a styled wrapper for PDF
-            const pdfContent = document.createElement('div');
-            pdfContent.innerHTML = `
-                <div style="font-family: 'Segoe UI', Tahoma, sans-serif; padding: 40px; background: white; color: #1e293b;">
-                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #0891b2; padding-bottom: 20px;">
-                        <h1 style="color: #0891b2; margin: 0; font-size: 28px;">🐝 BeeBox Dashboard</h1>
-                        <p style="color: #64748b; margin: 10px 0 0 0; font-size: 14px;">Báo cáo hoạt động nhân viên</p>
-                    </div>
-                    <div style="background: #f1f5f9; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
-                        <h2 style="margin: 0 0 10px 0; color: #0f172a; font-size: 20px;">Nhân viên: ${selectedEmployee.full_name}</h2>
-                        <p style="margin: 0; color: #64748b; font-size: 14px;">
-                            Kỳ báo cáo: Tháng ${currentMonth}/${currentYear} • 
-                            Xuất ngày: ${new Date().toLocaleDateString('vi-VN')}
-                        </p>
-                    </div>
-                    <div style="line-height: 1.6; font-size: 13px;">
-                        ${clonedContent.innerHTML}
-                    </div>
-                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 12px;">
-                        <p>Báo cáo được tạo tự động bởi BeeBox AI Dashboard</p>
-                    </div>
-                </div>
-            `;
+            // Build content from reportData
+            let htmlContent = '';
+            let chartScripts = []; // Collect any scripts needed
 
-            const opt = {
-                margin: [10, 10, 10, 10],
-                filename: `BeeBox_BaoCao_${selectedEmployee.full_name.replace(/\s+/g, '_')}_T${currentMonth}_${currentYear}.pdf`,
-                image: { type: 'jpeg', quality: 0.85 },
-                html2canvas: { scale: 1.2, useCORS: true, logging: false, removeContainer: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
+            if (reportData.length > 0) {
+                for (const item of reportData) {
+                    if (item.type === 'text' && item.text) {
+                        const lines = item.text.split('\n');
+                        for (const line of lines) {
+                            const t = line.trim();
+                            if (!t) continue;
+                            if (t.match(/^#{1,3}\s/)) {
+                                htmlContent += `<h3 style="color:#0891b2;font-size:16px;margin:18px 0 10px;font-weight:bold;">${t.replace(/^#+\s*/, '')}</h3>`;
+                            } else if (t.match(/^[-*•]\s/)) {
+                                htmlContent += `<p style="margin:5px 0 5px 25px;font-size:13px;">• ${t.replace(/^[-*•]\s*/, '')}</p>`;
+                            } else if (t.match(/^\d+\.\s/)) {
+                                htmlContent += `<p style="margin:5px 0 5px 25px;font-size:13px;">${t}</p>`;
+                            } else if (t.match(/^\*\*.*\*\*$/)) {
+                                htmlContent += `<p style="margin:10px 0;font-size:14px;font-weight:bold;">${t.replace(/\*\*/g, '')}</p>`;
+                            } else {
+                                htmlContent += `<p style="margin:8px 0;font-size:13px;">${t}</p>`;
+                            }
+                        }
+                    } else if (item.type === 'chart' && item.html) {
+                        // Log chart HTML to see what we're dealing with
+                        console.log('Chart HTML:', item.html.substring(0, 500));
 
-            await html2pdf().set(opt).from(pdfContent).save();
-        } catch (err) {
-            console.error('PDF download error:', err);
-        } finally {
+                        // Put chart HTML directly
+                        htmlContent += `
+                            <div style="margin:20px 0;padding:15px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;page-break-inside:avoid;">
+                                <p style="margin:0 0 10px;font-size:14px;color:#0891b2;font-weight:bold;">📊 Biểu đồ phân tích</p>
+                                <div style="width:100%;min-height:300px;overflow:visible;">
+                                    ${item.html}
+                                </div>
+                            </div>`;
+                    } else if (item.type === 'table' && item.columns && item.rows) {
+                        htmlContent += '<table style="width:100%;border-collapse:collapse;margin:15px 0;font-size:12px;">';
+                        htmlContent += '<thead><tr>';
+                        for (const col of item.columns) {
+                            htmlContent += `<th style="background:#f1f5f9;border:1px solid #e2e8f0;padding:10px;text-align:left;font-weight:bold;color:#0f172a;">${col}</th>`;
+                        }
+                        htmlContent += '</tr></thead><tbody>';
+                        for (const row of item.rows) {
+                            htmlContent += '<tr>';
+                            for (const cell of row) {
+                                htmlContent += `<td style="border:1px solid #e2e8f0;padding:8px;color:#1e293b;">${cell}</td>`;
+                            }
+                            htmlContent += '</tr>';
+                        }
+                        htmlContent += '</tbody></table>';
+                    }
+                }
+            } else if (reportResult) {
+                const lines = reportResult.split('\n');
+                for (const line of lines) {
+                    const t = line.trim();
+                    if (!t) continue;
+                    htmlContent += `<p style="margin:8px 0;font-size:13px;">${t}</p>`;
+                }
+            }
+
+            // Create printable HTML with chart
+            const printHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Báo cáo - ${selectedEmployee.full_name}</title>
+    <style>
+        @page { margin: 15mm; }
+        @media print { 
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
+            .no-print { display: none; }
+        }
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; color: #1e293b; line-height: 1.6; padding: 20px; background: white; }
+        .header { text-align: center; border-bottom: 4px solid #0891b2; padding-bottom: 20px; margin-bottom: 25px; }
+        .header h1 { color: #0891b2; font-size: 28px; margin: 0; }
+        .header p { color: #64748b; font-size: 14px; margin: 10px 0 0; }
+        .info { background: #f1f5f9; padding: 18px; border-radius: 10px; margin-bottom: 25px; border-left: 4px solid #0891b2; }
+        .info .name { font-size: 20px; font-weight: bold; color: #0f172a; margin: 0; }
+        .info .meta { font-size: 13px; color: #64748b; margin: 8px 0 0; }
+        .footer { margin-top: 35px; padding-top: 15px; border-top: 2px solid #e2e8f0; text-align: center; }
+        .footer p { color: #64748b; font-size: 11px; margin: 0; }
+        img, svg, canvas { max-width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🐝 BeeBox Dashboard</h1>
+        <p>Báo cáo hoạt động nhân viên</p>
+    </div>
+    <div class="info">
+        <p class="name">${selectedEmployee.full_name}</p>
+        <p class="meta">Mã NV: ${selectedEmployee.employee_id} | Kỳ: Tháng ${currentMonth}/${currentYear}</p>
+    </div>
+    <div class="content">
+        ${htmlContent}
+    </div>
+    <div class="footer">
+        <p>Xuất ngày ${new Date().toLocaleDateString('vi-VN')} - BeeBox AI Dashboard</p>
+    </div>
+</body>
+</html>`;
+
+            // Create print iframe
+            const printFrame = document.createElement('iframe');
+            printFrame.style.cssText = 'position:fixed;left:-9999px;width:800px;height:600px;border:0;';
+            document.body.appendChild(printFrame);
+
+            printFrame.contentWindow.document.open();
+            printFrame.contentWindow.document.write(printHtml);
+            printFrame.contentWindow.document.close();
+
+            // Wait longer for charts to render (2 seconds)
+            setTimeout(() => {
+                printFrame.contentWindow.focus();
+                printFrame.contentWindow.print();
+                setTimeout(() => {
+                    document.body.removeChild(printFrame);
+                    setIsDownloading(false);
+                }, 1000);
+            }, 2000);
+
+        } catch (e) {
+            console.error('PDF error:', e);
+            alert('Lỗi: ' + e.message);
             setIsDownloading(false);
         }
     };
 
-    // Generate and export report - dispatch event for App.jsx to handle
+    // Generate and export report
     const handleExportReport = () => {
         if (!selectedEmployee || selectedMetrics.length === 0) return;
-
-        const metricsLabels = selectedMetrics
-            .map(id => REPORT_METRICS.find(m => m.id === id)?.label)
-            .filter(Boolean)
-            .join(', ');
-
-        const prompt = `Phân tích chuyên sâu hiệu suất nhân viên:
-- ID nhân viên: ${selectedEmployee.employee_id}
-- Tên nhân viên: ${selectedEmployee.full_name}
-- Kỳ phân tích: Tháng ${currentMonth}/${currentYear}
-- Các chỉ số cần phân tích: ${metricsLabels}
-
-Yêu cầu phân tích chi tiết:
-1. Tổng quan hiệu suất làm việc trong tháng
-2. Phân tích từng chỉ số được chọn với số liệu cụ thể
-3. So sánh với KPI/mục tiêu đề ra
-4. Điểm mạnh và điểm cần cải thiện
-5. Đề xuất hành động cụ thể để nâng cao hiệu suất
-6. Dự báo xu hướng tháng tiếp theo
-
-Hãy trình bày báo cáo dạng bảng markdown chuyên nghiệp, có biểu đồ nếu cần, và đưa ra nhận xét, đánh giá chi tiết dựa trên dữ liệu thực tế.`;
-
-        // Close metrics modal and open result modal
+        const labels = selectedMetrics.map(id => REPORT_METRICS.find(m => m.id === id)?.label).filter(Boolean).join(', ');
+        const prompt = `Phân tích chuyên sâu hiệu suất nhân viên:\n- ID: ${selectedEmployee.employee_id}\n- Tên: ${selectedEmployee.full_name}\n- Kỳ: Tháng ${currentMonth}/${currentYear}\n- Chỉ số: ${labels}\n\nYêu cầu:\n1. Tổng quan hiệu suất\n2. Phân tích từng chỉ số\n3. So sánh KPI\n4. Điểm mạnh/yếu\n5. Đề xuất cải thiện\n6. Dự báo xu hướng\n\nTrình bày markdown chuyên nghiệp, có biểu đồ nếu cần.`;
         setReportModalOpen(false);
         setReportResultOpen(true);
         setReportLoading(true);
@@ -340,62 +401,20 @@ Hãy trình bày báo cáo dạng bảng markdown chuyên nghiệp, có biểu �
         setReportResult('');
         setAnalysisStep(0);
         setElapsedTime(0);
-
-        // Timer for elapsed time (every 1 second)
-        const timeInterval = setInterval(() => {
-            setElapsedTime(prev => prev + 1);
-        }, 1000);
-
-        // Animate through analysis steps (6 seconds each for ~30s total)
-        // Step timing: 0s->Step1, 6s->Step2, 12s->Step3, 18s->Step4
-        const stepTimings = [0, 6000, 12000, 18000];
-        const stepTimeouts = stepTimings.map((delay, index) =>
-            setTimeout(() => setAnalysisStep(index), delay)
-        );
-
-        // Create unique request ID
-        const requestId = `report-${selectedEmployee.employee_id}-${Date.now()}`;
-
-        // Listen for response from App.jsx
-        const handleResponse = (event) => {
-            if (event.detail?.requestId === requestId) {
-                // Clear all timers
-                clearInterval(timeInterval);
-                stepTimeouts.forEach(t => clearTimeout(t));
-                setReportLoading(false);
-
-                if (event.detail.error) {
-                    setReportError(event.detail.error);
-                } else {
-                    setReportResult(event.detail.result || 'Không có dữ liệu trả về.');
-                    setReportData(event.detail.data || []);
-                }
-
-                window.removeEventListener('bb-report-response', handleResponse);
+        const ti = setInterval(() => setElapsedTime(p => p + 1), 1000);
+        const st = [0, 6000, 12000, 18000].map((d, i) => setTimeout(() => setAnalysisStep(i), d));
+        const rid = `report-${selectedEmployee.employee_id}-${Date.now()}`;
+        const hr = (e) => {
+            if (e.detail?.requestId === rid) {
+                clearInterval(ti); st.forEach(t => clearTimeout(t)); setReportLoading(false);
+                if (e.detail.error) setReportError(e.detail.error);
+                else { setReportResult(e.detail.result || 'Không có dữ liệu.'); setReportData(e.detail.data || []); }
+                window.removeEventListener('bb-report-response', hr);
             }
         };
-
-        window.addEventListener('bb-report-response', handleResponse);
-
-        // Timeout after 120 seconds (2 minutes)
-        setTimeout(() => {
-            clearInterval(timeInterval);
-            stepTimeouts.forEach(t => clearTimeout(t));
-            window.removeEventListener('bb-report-response', handleResponse);
-            if (reportLoading) {
-                setReportLoading(false);
-                setReportError('Timeout - Vui lòng thử lại sau.');
-            }
-        }, 120000);
-
-        // Dispatch request to App.jsx
-        window.dispatchEvent(new CustomEvent('bb-report-request', {
-            detail: {
-                requestId,
-                prompt,
-                employeeName: selectedEmployee.full_name
-            }
-        }));
+        window.addEventListener('bb-report-response', hr);
+        setTimeout(() => { clearInterval(ti); st.forEach(t => clearTimeout(t)); window.removeEventListener('bb-report-response', hr); if (reportLoading) { setReportLoading(false); setReportError('Timeout'); } }, 120000);
+        window.dispatchEvent(new CustomEvent('bb-report-request', { detail: { requestId: rid, prompt, employeeName: selectedEmployee.full_name } }));
     };
 
     // Render markdown to HTML (basic)
