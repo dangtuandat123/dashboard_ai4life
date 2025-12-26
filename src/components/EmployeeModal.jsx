@@ -296,7 +296,7 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                                 <p style="margin:0 0 10px;font-size:14px;color:#0891b2;font-weight:bold;">📊 Biểu đồ ${chartIndex}</p>
                                 <iframe 
                                     srcdoc="${encodedHtml}"
-                                    style="width:100%;height:400px;border:none;overflow:hidden;"
+                                    style="width:100%;height:280px;border:none;overflow:hidden;"
                                     scrolling="no"
                                 ></iframe>
                             </div>`;
