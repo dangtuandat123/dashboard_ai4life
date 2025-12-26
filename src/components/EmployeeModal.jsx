@@ -260,7 +260,7 @@ const EmployeeModal = ({ isOpen, onClose }) => {
         try {
             // Build content from reportData
             let htmlContent = '';
-            let chartScripts = []; // Collect any scripts needed
+            let chartIndex = 0; // Counter for unique chart IDs
 
             if (reportData.length > 0) {
                 for (const item of reportData) {
@@ -282,16 +282,23 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                             }
                         }
                     } else if (item.type === 'chart' && item.html) {
-                        // Log chart HTML to see what we're dealing with
-                        console.log('Chart HTML:', item.html.substring(0, 500));
+                        chartIndex++;
+                        console.log(`Chart ${chartIndex} HTML:`, item.html.substring(0, 200));
 
-                        // Put chart HTML directly
+                        // Encode chart HTML for srcdoc attribute
+                        const encodedHtml = item.html
+                            .replace(/&/g, '&amp;')
+                            .replace(/"/g, '&quot;');
+
+                        // Each chart gets its own iframe (independent document)
                         htmlContent += `
                             <div style="margin:20px 0;padding:15px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;page-break-inside:avoid;">
-                                <p style="margin:0 0 10px;font-size:14px;color:#0891b2;font-weight:bold;">📊 Biểu đồ phân tích</p>
-                                <div style="width:100%;min-height:300px;overflow:visible;">
-                                    ${item.html}
-                                </div>
+                                <p style="margin:0 0 10px;font-size:14px;color:#0891b2;font-weight:bold;">📊 Biểu đồ ${chartIndex}</p>
+                                <iframe 
+                                    srcdoc="${encodedHtml}"
+                                    style="width:100%;height:400px;border:none;overflow:hidden;"
+                                    scrolling="no"
+                                ></iframe>
                             </div>`;
                     } else if (item.type === 'table' && item.columns && item.rows) {
                         htmlContent += '<table style="width:100%;border-collapse:collapse;margin:15px 0;font-size:12px;">';
@@ -343,6 +350,9 @@ const EmployeeModal = ({ isOpen, onClose }) => {
         .footer { margin-top: 35px; padding-top: 15px; border-top: 2px solid #e2e8f0; text-align: center; }
         .footer p { color: #64748b; font-size: 11px; margin: 0; }
         img, svg, canvas { max-width: 100%; height: auto; }
+        .chart-container { max-height: 400px; overflow: hidden; }
+        .chart-container iframe { max-height: 380px; width: 100%; border: none; }
+        .chart-container > div { max-height: 380px; }
     </style>
 </head>
 <body>
@@ -363,16 +373,16 @@ const EmployeeModal = ({ isOpen, onClose }) => {
 </body>
 </html>`;
 
-            // Create print iframe
+            // Create print iframe with larger size for all charts
             const printFrame = document.createElement('iframe');
-            printFrame.style.cssText = 'position:fixed;left:-9999px;width:800px;height:600px;border:0;';
+            printFrame.style.cssText = 'position:fixed;left:-9999px;width:1200px;height:2000px;border:0;background:white;';
             document.body.appendChild(printFrame);
 
             printFrame.contentWindow.document.open();
             printFrame.contentWindow.document.write(printHtml);
             printFrame.contentWindow.document.close();
 
-            // Wait longer for charts to render (2 seconds)
+            // Wait longer for ALL charts to render (4 seconds for 3 charts)
             setTimeout(() => {
                 printFrame.contentWindow.focus();
                 printFrame.contentWindow.print();
@@ -380,7 +390,7 @@ const EmployeeModal = ({ isOpen, onClose }) => {
                     document.body.removeChild(printFrame);
                     setIsDownloading(false);
                 }, 1000);
-            }, 2000);
+            }, 4000);
 
         } catch (e) {
             console.error('PDF error:', e);
